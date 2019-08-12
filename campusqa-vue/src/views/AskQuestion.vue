@@ -1,0 +1,102 @@
+<template>
+    <div class="askquestion" style="margin-top: 15px">
+        <v-card outlined>
+            <v-card-title>
+                <span class="headline">我要提问</span>
+            </v-card-title>
+            <v-card-text>
+                <v-container grid-list-md>
+                    <v-form ref="form" v-model="valid">
+                        <v-layout wrap>
+                            <v-flex xs12>
+                                <v-text-field outlined
+                                              v-model="QuestionForm.title"
+                                              :rules="rules.title"
+                                              label="问题标题*"
+                                              placeholder="请输入问题标题"
+                                              required :counter="20"></v-text-field>
+                            </v-flex>
+                            <v-flex xs12>
+                                <small style="
+                                position:absolute;
+                                margin-left:13px;
+                                margin-top: -10px;
+                                background-color: #ffffff"
+                                >问题描述*</small>
+                                <quill-editor ref="myQuillEditor"
+                                              :options="editorOption"
+                                              v-model="QuestionForm.describe"></quill-editor>
+
+                            </v-flex>
+                        </v-layout>
+                    </v-form>
+                </v-container>
+            </v-card-text>
+            <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="blue darken-1" text>发布问题</v-btn>
+            </v-card-actions>
+        </v-card>
+    </div>
+</template>
+<script>
+
+    export default {
+        data: () => ({
+            valid: true,
+            QuestionForm: {
+                title: '',
+                describe: ''
+            },
+            rules: {
+                title: [
+                    v => !!v || '问题标题不得为空',
+                    v => (v && v.length >= 5 && v.length <= 20) || '问题标题应大于5个字符,小于20个字符'
+                ]
+            },
+            editorOption: {
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote'],
+                        [{'header': 1}, {'header': 2}],
+                        [{'list': 'ordered'}, {'list': 'bullet'}],
+                        [{'script': 'sub'}, {'script': 'super'}],
+                        [{'indent': '-1'}, {'indent': '+1'}],
+                        [{'size': [false, 'large', 'huge']}],
+                        [{'header': [1, 2, 3, 4, 5, 6, false]}],
+                        [{'align': []}],
+                        ['link', 'image']
+                    ]
+                },
+                placeholder: '请输入问题描述*'
+            }
+        }),
+        computed: {
+            editor() {
+                return this.$refs.myQuillEditor.quill;
+            },
+        },
+        mounted() {
+            // 设置编辑器高度
+            this.editor.container.style.height = `350px`
+        },
+        methods: {}
+    }
+</script>
+
+<style>
+    .ql-toolbar.ql-snow {
+        border-radius: 4px 4px 0 0;
+    }
+
+    .ql-container.ql-snow {
+        border-radius: 0 0 4px 4px;
+    }
+
+    .ql-editor.ql-blank::before {
+        font-style: normal;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 15px;
+    }
+</style>
