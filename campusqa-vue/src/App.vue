@@ -4,7 +4,7 @@
             <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
             <span class="title ml-3 mr-8">校园&nbsp;<span class="font-weight-light">问答平台</span></span>
             <v-spacer></v-spacer>
-            <v-text-field class="right" solo-inverted flat hide-details label="Search"
+            <v-text-field solo-inverted flat hide-details label="Search"
                           prepend-inner-icon="mdi-comment-search-outline"></v-text-field>
         </v-app-bar>
 
