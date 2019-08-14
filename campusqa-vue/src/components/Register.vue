@@ -25,19 +25,23 @@
                                 <v-flex xs12 sm6>
                                     <v-text-field v-model="registerForm.name" :rules="rules.name" label="姓名*"
                                                   :counter="10"
-                                                  required></v-text-field>
+                                                  color="amber darken-3"
+                                                  required>
+                                    </v-text-field>
                                 </v-flex>
                                 <v-flex xs12 sm6>
                                     <v-select v-model="registerForm.gender"
                                               :rule="rules.gender"
                                               :items="['男', '女']"
                                               label="性别*"
+                                              color="amber darken-3"
                                               required
                                     ></v-select>
                                 </v-flex>
                                 <v-flex xs12 sm6>
                                     <v-text-field v-model="registerForm.enrollmentTime" :rules="rules.enrollmentTime"
                                                   label="入学年份*"
+                                                  color="amber darken-3"
                                                   required></v-text-field>
                                 </v-flex>
                                 <v-flex xs12 sm6>
@@ -45,14 +49,16 @@
                                                     :rules="rules.college"
                                                     :items="['信息学院', '理学院', '环境学院']"
                                                     label="学院"
+                                                    color="amber darken-3"
                                     ></v-autocomplete>
                                 </v-flex>
                                 <v-flex xs12 sm6>
                                     <v-text-field v-model="registerForm.phoneNum" :rules="rules.phoneNum" label="电话号码*"
-                                                  required></v-text-field>
+                                                  color="amber darken-3" required></v-text-field>
                                 </v-flex>
                                 <v-flex xs12 sm6>
                                     <v-text-field v-model="registerForm.password" :rules="rules.password" label="密码*"
+                                                  color="amber darken-3"
                                                   type="password" required
                                                   hint="密码需8位及以上，包含数字、字母"></v-text-field>
                                 </v-flex>
@@ -63,8 +69,8 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" text @click="close">关闭</v-btn>
-                    <v-btn color="blue darken-1" text @click="close">注册</v-btn>
+                    <v-btn color="amber darken-3" text @click="close">关闭</v-btn>
+                    <v-btn color="amber darken-3" text @click="close">注册</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>

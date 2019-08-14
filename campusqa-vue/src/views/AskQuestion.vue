@@ -13,6 +13,7 @@
                                               v-model="QuestionForm.title"
                                               :rules="rules.title"
                                               label="问题标题*"
+                                              color="amber darken-3"
                                               placeholder="请输入问题标题"
                                               required :counter="20"></v-text-field>
                             </v-flex>
@@ -34,7 +35,7 @@
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" text>发布问题</v-btn>
+                <v-btn color="amber darken-3" text>发布问题</v-btn>
             </v-card-actions>
         </v-card>
     </div>

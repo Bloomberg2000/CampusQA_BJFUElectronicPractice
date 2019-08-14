@@ -2,9 +2,9 @@
     <v-app id="app">
         <v-app-bar app clipped-left color="amber">
             <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-            <span class="title ml-3 mr-8">校园&nbsp;<span class="font-weight-light">问答平台</span></span>
+            <span class="title ml-3 mr-6">校园&nbsp;<span class="font-weight-light">问答</span></span>
             <v-spacer></v-spacer>
-            <v-text-field solo-inverted flat hide-details label="Search"
+            <v-text-field solo-inverted flat hide-details label="Search" color="amber darken-3"
                           prepend-inner-icon="mdi-comment-search-outline"></v-text-field>
         </v-app-bar>
 
@@ -32,7 +32,7 @@
                         </v-flex>
                     </v-layout>
                     <v-divider v-else-if="item.divider" :key="i" dark class="my-4"></v-divider>
-                    <v-list-item v-else :key="i" link :to="item.to">
+                    <v-list-item color="amber" v-else :key="i" link :to="item.to">
                         <v-list-item-action>
                             <v-icon>{{ item.icon }}</v-icon>
                         </v-list-item-action>

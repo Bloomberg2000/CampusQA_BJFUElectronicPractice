@@ -2,7 +2,7 @@
     <v-layout justify-center>
         <v-dialog v-model="show" persistent max-width="600px">
             <template v-slot:activator="{ on }">
-                <v-list-item link v-on="on">
+                <v-list-item link v-on="on" color="amber darken-3">
                     <v-list-item-action>
                         <v-icon>mdi-login</v-icon>
                     </v-list-item-action>
@@ -24,11 +24,11 @@
                             <v-layout wrap>
                                 <v-flex xs12>
                                     <v-text-field v-model="LoginForm.phoneNum" :rules="rules.phoneNum" label="电话号码*"
-                                                  required></v-text-field>
+                                                 color="amber darken-3" required></v-text-field>
                                 </v-flex>
                                 <v-flex xs12>
                                     <v-text-field v-model="LoginForm.password" :rules="rules.password" label="密码*"
-                                                  type="password" required
+                                                  type="password" color="amber darken-3" required
                                                   hint="密码需8位及以上，包含数字、字母"></v-text-field>
                                 </v-flex>
                             </v-layout>
@@ -38,8 +38,8 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" text @click="close">关闭</v-btn>
-                    <v-btn color="blue darken-1" text @click="close">登录</v-btn>
+                    <v-btn color="amber darken-3" text @click="close">关闭</v-btn>
+                    <v-btn color="amber darken-3" text @click="close">登录</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
