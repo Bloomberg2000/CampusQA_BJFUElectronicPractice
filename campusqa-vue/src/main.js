@@ -11,12 +11,11 @@ import VueQuillEditor from 'vue-quill-editor'
 
 
 new Vue({
-  // vuetify,
+  vuetify,
   router,
   render: h => h(App)
 }).$mount('#app')
 
 Vue.use(VueQuillEditor)
-Vue.use(vuetify)
 
 Vue.config.productionTip = false
