@@ -5,6 +5,7 @@ import json
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.core import serializers
+from django.db.models import Q
 from . import models
 
 
@@ -20,6 +21,8 @@ def login(request):
                     current_user = models.User.objects.get(phoneNum=phoneNum)
                     password = hashlib.md5(password.encode(encoding='UTF-8')).hexdigest()  # 对密码进行加密
                     if current_user.password == password:
+                        request.session['ISLOGIN'] = "true"
+                        request.session['USERUNIQUEID'] = current_user.userID
                         return message_helper(success=True)
                     else:
                         return message_helper(error_message="密码错误")
@@ -29,6 +32,14 @@ def login(request):
                 return message_helper(error_message="用户名或密码不能为空")
     else:
         return message_helper(method_error=True)
+
+
+def logout(request):
+    if not is_login(request):
+        return message_helper(error_message="请先登录")
+    request.session['ISLOGIN'] = "false"
+    request.session['USERUNIQUEID'] = ''
+    return message_helper(success=True)
 
 
 def register(request):
@@ -62,12 +73,17 @@ def register(request):
 
 
 def get_personal_info(request, user_id):
+    if not is_login(request):
+        return message_helper(error_message="请先登录")
     if user_id:
         if user_id == who_is_login(request):
-            current_user = models.User.objects.filter(userID=user_id)
+            current_user = models.User.objects.filter(userID=user_id).values("name", "gender", "college",
+                                                                             "enrollmentTime")
             if current_user.count() > 0:
                 return message_helper(success=True,
-                                      dataToReturn=json.loads(serializers.serialize("json", current_user)))
+                                      dataToReturn=json.loads(
+                                          json.dumps(list(current_user), ensure_ascii=False)
+                                      ))
             else:
                 return message_helper(error_message="用户不存在")
         else:
@@ -100,8 +116,18 @@ def get_personal_answer_list(request, user_id):
         return message_helper(method_error=True)
 
 
-def search_by_keywords(request, keyword):
-    return HttpResponse("Hello, world. You're at the polls index.")
+def search_by_keywords(request):
+    keyword = request.GET.get('keyword')
+    if keyword:
+        if is_login(request):
+            models.SearchHistory(userID=models.User.objects.get(userID=who_is_login(request)),
+                                 searchTime=datetime.datetime.now(),
+                                 searchContent=keyword,
+                                 isValid=True).save()
+        search_result = models.Questions.objects.filter(Q(title__icontains=keyword) | Q(content__icontains=keyword))
+        return message_helper(success=True, dataToReturn=json.loads(serializers.serialize("json", search_result)))
+    else:
+        return message_helper(error_message="请输入搜索内容")
 
 
 def get_question_list(request):
@@ -111,6 +137,8 @@ def get_question_list(request):
 
 
 def create_question(request):
+    if not is_login(request):
+        return message_helper(error_message="请先登录")
     if request.method == 'POST':  # 当提交表单时
         # 判断是否传参
         if request.POST:
@@ -136,6 +164,8 @@ def create_question(request):
 
 
 def edit_question(request, question_id):
+    if not is_login(request):
+        return message_helper(error_message="请先登录")
     if request.method == 'POST':  # 当提交表单时
         # 判断是否传参
         if request.POST:
@@ -164,6 +194,8 @@ def edit_question(request, question_id):
 
 
 def delete_question(request, question_id):
+    if not is_login(request):
+        return message_helper(error_message="请先登录")
     if question_id:
         try:
             question = models.Questions.objects.get(questionId=question_id)
@@ -190,6 +222,8 @@ def get_answer_list_by_question_id(request, question_id):
 
 
 def create_answer(request, question_id):
+    if not is_login(request):
+        return message_helper(error_message="请先登录")
     if request.method == 'POST':  # 当提交表单时
         # 判断是否传参
         if request.POST:
@@ -215,6 +249,8 @@ def create_answer(request, question_id):
 
 
 def edit_answer(request, answer_id):
+    if not is_login(request):
+        return message_helper(error_message="请先登录")
     if request.method == 'POST':  # 当提交表单时
         # 判断是否传参
         if request.POST:
@@ -241,6 +277,8 @@ def edit_answer(request, answer_id):
 
 
 def delete_answer(request, answer_id):
+    if not is_login(request):
+        return message_helper(error_message="请先登录")
     if answer_id:
         try:
             answer = models.Answers.objects.get(answerID=answer_id)
@@ -253,6 +291,10 @@ def delete_answer(request, answer_id):
             return message_helper(error_message="问题不存在")
     else:
         return message_helper(method_error=True)
+
+
+def is_login(request):
+    return True if (request.session.get('ISLOGIN') == 'true') else False
 
 
 def who_is_login(request):

@@ -19,17 +19,18 @@ from . import views
 
 urlpatterns = [
     path('users/login', views.login),
+    path('users/logout', views.logout),
     path('users/register', views.register),
     path('users/personalInfo/<int:user_id>/', views.get_personal_info),
     path('users/personalQuestionList/<int:user_id>/', views.get_personal_question_list),
     path('users/personalAnswerList/<int:user_id>/', views.get_personal_answer_list),
 
-    path('search/<keyword>', views.search_by_keywords),
+    path('search/', views.search_by_keywords),
 
     path('questions/', views.get_question_list),
     path('questions/create', views.create_question),
-    path('questions/delete/<int:question_id>', views.delete_question),
     path('questions/edit/<int:question_id>', views.edit_question),
+    path('questions/delete/<int:question_id>', views.delete_question),
 
     path('answers/<int:question_id>', views.get_answer_list_by_question_id),
     path('answers/create/<int:question_id>', views.create_answer),
