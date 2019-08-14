@@ -2,7 +2,7 @@
     <v-app id="app">
         <v-app-bar app clipped-left color="amber">
             <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-            <span class="title ml-3 mr-6">校园&nbsp;<span class="font-weight-light">问答</span></span>
+            <span class="title">校园&nbsp;<span class="font-weight-light">问答</span></span>
             <v-spacer></v-spacer>
             <v-text-field solo-inverted flat hide-details label="Search" color="amber darken-3"
                           prepend-inner-icon="mdi-comment-search-outline"></v-text-field>
@@ -76,6 +76,10 @@
 </script>
 
 <style>
+    .title {
+        width: 120px !important;
+    }
+
     #keep .v-navigation-drawer__border {
         display: none
     }
