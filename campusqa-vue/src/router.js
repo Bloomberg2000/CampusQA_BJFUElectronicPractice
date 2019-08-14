@@ -14,20 +14,15 @@ export default new Router({
         {
             path: '/askquestion',
             name: 'askquestion',
-            component(resolve) {
-                require(["./views/AskQuestion.vue"], resolve)
-            }
+            component: () => import(/* webpackChunkName: "about" */ './views/AskQuestion.vue')
         },
         {
             path: '/questiondetail',
             name: 'questiondetail',
-            component(resolve) {
-                require(["./views/QuestionDetail.vue"], resolve)
-            }
             // route level code-splitting
             // this generates a separate chunk (about.[hash].js) for this route
             // which is lazy-loaded when the route is visited.
-            // component: () => import(/* webpackChunkName: "about" */ './views/QuestionDetail.vue')
+            component: () => import(/* webpackChunkName: "about" */ './views/QuestionDetail.vue')
         }
     ]
 })
