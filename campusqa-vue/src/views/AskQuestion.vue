@@ -25,8 +25,8 @@
                                 background-color: #ffffff"
                                 >问题描述*</small>
                                 <quill-editor ref="myQuillEditor"
-                                             :options="editorOption"
-                                             v-model="QuestionForm.describe"></quill-editor>
+                                              :options="editorOption"
+                                              v-model="QuestionForm.describe"></quill-editor>
 
                             </v-flex>
                         </v-layout>

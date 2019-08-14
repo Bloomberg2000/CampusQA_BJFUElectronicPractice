@@ -1,15 +1,3 @@
-/**
- * *@2018-10-08
- * *@author trsoliu
- * *@describe vue-cli 3.x配置文件
- */
-const vConsolePlugin = require('vconsole-webpack-plugin');
-const CompressionPlugin = require('compression-webpack-plugin'); //Gzip
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin; //Webpack包文件分析器
-const fs = require('fs')
-const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
-
-
 module.exports = {
     //基本路径
     publicPath: './',//vue-cli3.3+新版本使用
@@ -30,59 +18,59 @@ module.exports = {
     // webpack配置
     //对内部的 webpack 配置进行更细粒度的修改 https://github.com/neutrinojs/webpack-chain see https://github.com/vuejs/vue-cli/blob/dev/docs/webpack.md
     chainWebpack: config => {
-        /**
-         * 删除懒加载模块的prefetch，降低带宽压力
-         * https://cli.vuejs.org/zh/guide/html-and-static-assets.html#prefetch
-         * 而且预渲染时生成的prefetch标签是modern版本的，低版本浏览器是不需要的
-         */
-        //config.plugins.delete('prefetch');
-        //if(process.env.NODE_ENV === 'production') { // 为生产环境修改配置...process.env.NODE_ENV !== 'development'
-        //} else {// 为开发环境修改配置...
-        //}
+        config.module
+            .rule('images')
+            .use('image-webpack-loader')
+            .loader('image-webpack-loader')
+            .options({
+                bypassOnDebug: true
+            })
+            .end()
     },
     //调整 webpack 配置 https://cli.vuejs.org/zh/guide/webpack.html#%E7%AE%80%E5%8D%95%E7%9A%84%E9%85%8D%E7%BD%AE%E6%96%B9%E5%BC%8F
-    configureWebpack: config => {
-        //生产and测试环境
-        let pluginsPro = [
-            new CompressionPlugin({ //文件开启Gzip，也可以通过服务端(如：nginx)(https://github.com/webpack-contrib/compression-webpack-plugin)
-                filename: '[path].gz[query]',
-                algorithm: 'gzip',
-                test: new RegExp('\\.(' + ['js', 'css'].join('|') + ')$',),
-                threshold: 8192,
-                minRatio: 0.8,
-            }),
-            //	Webpack包文件分析器(https://github.com/webpack-contrib/webpack-bundle-analyzer)
-            new BundleAnalyzerPlugin(),
-            new VuetifyLoaderPlugin()
-        ];
-        //开发环境
-        let pluginsDev = [
-            //移动端模拟开发者工具(https://github.com/diamont1001/vconsole-webpack-plugin  https://github.com/Tencent/vConsole)
-            new vConsolePlugin({
-                filter: [], // 需要过滤的入口文件
-                enable: true // 发布代码前记得改回 false
-            }),
-        ];
-        if (process.env.NODE_ENV === 'production') { // 为生产环境修改配置...process.env.NODE_ENV !== 'development'
-            config.plugins = [...config.plugins, ...pluginsPro];
-        } else {
-            // 为开发环境修改配置...
-            config.plugins = [...config.plugins, ...pluginsDev];
+    configureWebpack: () => ({
+        optimization: {
+            splitChunks: {
+                cacheGroups: {
+                    vendor: {
+                        chunks: "all",
+                        test: /node_modules/,
+                        name: "vendor",
+                        minChunks: 1,
+                        maxInitialRequests: 5,
+                        minSize: 0,
+                        priority: 100,
+                    },
+                    common: {
+                        chunks: "all",
+                        test: /[\\/]src[\\/]js[\\/]/,
+                        name: "common",
+                        minChunks: 2,
+                        maxInitialRequests: 5,
+                        minSize: 0,
+                        priority: 60
+                    },
+                    styles: {
+                        name: 'styles',
+                        test: /\.(sa|sc|c)ss$/,
+                        chunks: 'all',
+                        enforce: true,
+                    },
+                    runtimeChunk: {
+                        name: 'manifest'
+                    }
+                }
+            }
         }
-    },
+    }),
     css: {
-        // 启用 CSS modules
-        modules: false,
         // 是否使用css分离插件
         extract: true,
         // 开启 CSS source maps，一般不建议开启
         sourceMap: false,
+        modules: false,
         // css预设器配置项
-        loaderOptions: {
-            sass: {
-                // data: fs.readFileSync('src/variables.scss', 'utf-8')
-            }
-        }
+        loaderOptions: {}
     },
     // webpack-dev-server 相关配置 https://webpack.js.org/configuration/dev-server/
     devServer: {
@@ -112,5 +100,4 @@ module.exports = {
             //injector: 'append'
         }
     },
-
 };
