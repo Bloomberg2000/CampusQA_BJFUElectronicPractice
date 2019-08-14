@@ -25,8 +25,8 @@
                                 background-color: #ffffff"
                                 >问题描述*</small>
                                 <quill-editor ref="myQuillEditor"
-                                              :options="editorOption"
-                                              v-model="QuestionForm.describe"></quill-editor>
+                                             :options="editorOption"
+                                             v-model="QuestionForm.describe"></quill-editor>
 
                             </v-flex>
                         </v-layout>
@@ -41,8 +41,14 @@
     </div>
 </template>
 <script>
-
+    import 'quill/dist/quill.core.css';
+    import 'quill/dist/quill.snow.css';
+    import 'quill/dist/quill.bubble.css';
+    import {quillEditor} from "vue-quill-editor"; //调用编辑器
     export default {
+        components: {
+            quillEditor
+        },
         data: () => ({
             valid: true,
             QuestionForm: {

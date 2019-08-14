@@ -13,7 +13,7 @@
 
                 <v-list-item two-line>
                     <v-list-item-avatar>
-                        <img src="@/assets/userpic.jpg">
+                        <img src="./assets/userpic.jpg">
                     </v-list-item-avatar>
                     <v-list-item-content>
                         <v-list-item-title>未登录</v-list-item-title>
@@ -55,11 +55,13 @@
 </template>
 
 <script>
-    import Login from "./components/Login";
-    import Register from "./components/Register";
+    const Login = () => import('./components/Login');
+    const Register = () => import('./components/Register');
 
     export default {
-        components: {Login, Register},
+        components: {
+            Login, Register
+        },
         props: {
             source: String,
         },

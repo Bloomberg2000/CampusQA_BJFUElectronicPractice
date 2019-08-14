@@ -7,6 +7,8 @@ const vConsolePlugin = require('vconsole-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin'); //Gzip
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin; //Webpack包文件分析器
 const fs = require('fs')
+const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
+
 
 module.exports = {
     //基本路径
@@ -51,6 +53,7 @@ module.exports = {
             }),
             //	Webpack包文件分析器(https://github.com/webpack-contrib/webpack-bundle-analyzer)
             new BundleAnalyzerPlugin(),
+            new VuetifyLoaderPlugin()
         ];
         //开发环境
         let pluginsDev = [
@@ -108,5 +111,6 @@ module.exports = {
             ],
             //injector: 'append'
         }
-    }
+    },
+
 };
