@@ -28,6 +28,7 @@ urlpatterns = [
     path('search/', views.search_by_keywords),
 
     path('questions/', views.get_question_list),
+    path('questions/<int:question_id>', views.get_question_info),
     path('questions/create', views.create_question),
     path('questions/edit/<int:question_id>', views.edit_question),
     path('questions/delete/<int:question_id>', views.delete_question),

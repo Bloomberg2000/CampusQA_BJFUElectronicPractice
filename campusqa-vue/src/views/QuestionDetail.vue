@@ -5,18 +5,10 @@
                 <v-list-item>
                     <v-list-item-content>
                         <!--          <div class="overline mb-4">OVERLINE</div>-->
-                        <v-list-item-title class="headline mb-1">问题标题</v-list-item-title>
-                        <v-list-item-subtitle><p>sjxnsanxakxjnaskx</p>
-
-                        </v-list-item-subtitle>
+                        <v-list-item-title class="headline mb-1">{{questionInfo.title}}</v-list-item-title>
+                        <v-list-item-subtitle><p>{{formatDate(questionInfo.createTime)}}</p></v-list-item-subtitle>
                         <v-list-item-content>
-                            <h1>x sa x a c m s l d c m s l d k c m s l c</h1>
-                            <p>dskmc</p>
-                            <p>cs</p>
-                            <p>cdsckdscsc</p>
-                            <p>cddcdc<sub>23</sub></p>
-                            <p><sub><strong><em><s><u>cdsmclsmdkm</u></s></em></strong><s><span
-                                    class="ql-cursor"></span></s></sub></p>
+                            {{questionInfo.content}}
                         </v-list-item-content>
                     </v-list-item-content>
                 </v-list-item>
@@ -40,41 +32,101 @@
             </v-speed-dial>
         </v-card>
         <v-expansion-panels popout multiple style="margin-top: 20px">
-            <v-expansion-panel v-for="(item,i) in 20" :key="i">
-                <v-expansion-panel-header>Item<br><br></v-expansion-panel-header>
+            <v-expansion-panel v-for="(item,index) in answerList" :key="index">
+                <v-expansion-panel-header>
+                    <v-list-item>
+                        <v-list-item-avatar>
+                            <img :src="imgpath.public.userPic">
+                        </v-list-item-avatar>
+                        <v-list-item-content>
+                            <v-list-item-title>{{item.createUser.name}}</v-list-item-title>
+                            <v-list-item-subtitle>{{formatDate(item.editTime)}}</v-list-item-subtitle>
+                        </v-list-item-content>
+                    </v-list-item>
+                </v-expansion-panel-header>
                 <v-expansion-panel-content>
-                    <h1>x sa x a c m s l d c m s l d k c m s l c</h1>
-                    <p>dskmc</p>
-                    <p>cs</p>
-                    <p>cdsckdscsc</p>
-                    <p>cddcdc<sub>23</sub></p>
-                    <p><sub><strong><em><s><u>cdsmclsmdkm</u></s></em></strong><s><span
-                            class="ql-cursor"></span></s></sub></p>
+                    {{item.content}}
                 </v-expansion-panel-content>
             </v-expansion-panel>
         </v-expansion-panels>
     </div>
 </template>
 <script>
+    import axios from 'axios'
+    import {AnswersInfo, QuestionsInfo} from "../assets/js/url";
+
     export default {
         data: () => ({
+            questionID: 0,
+            questionInfo: [],
+            answerList: [],
             fab: false
         }),
-        computed: {},
+        mounted() {
+            this.questionID = this.$route.query.questionID;
+            console.log(this.$route.query.questionID);
+            this.getQuestionInfo();
+            this.getAnswers();
+        },
+        methods: {
+            getQuestionInfo() {
+                axios.get(QuestionsInfo + this.questionID)
+                    .then(
+                        res => {
+                            if (res.data.status === 200) {
+                                this.questionInfo = res.data.data[0].fields;
+                                console.log(this.questionInfo)
+                            }
+                        }
+                    )
+            },
+            getAnswers() {
+                axios.get(AnswersInfo + this.questionID)
+                    .then(
+                        res => {
+                            if (res.data.status === 200) {
+                                this.answerList = res.data.data;
+                            }
+                        }
+                    )
+            },
+            formatDate(inputTime) {
+                if (!inputTime && typeof inputTime !== 'number') {
+                    return '';
+                }
+                var localTime = '';
+                inputTime = new Date(inputTime).getTime();
+                const offset = (new Date()).getTimezoneOffset();
+                localTime = (new Date(inputTime - offset * 60000)).toISOString();
+                localTime = localTime.substr(0, localTime.lastIndexOf('.'));
+                localTime = localTime.replace('T', ' ');
+                return localTime;
+            }
+        },
+        computed: {
+            imgpath() {
+                return this.$store.state.imageStyle
+            }
+        },
         watch: {
             top(val) {
                 this.bottom = !val
-            },
+            }
+            ,
             right(val) {
                 this.left = !val
-            },
+            }
+            ,
             bottom(val) {
                 this.top = !val
-            },
+            }
+            ,
             left(val) {
                 this.right = !val
-            },
-        },
+            }
+            ,
+        }
+        ,
     }
 </script>
 <style>

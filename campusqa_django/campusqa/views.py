@@ -2,10 +2,11 @@ import datetime
 import hashlib
 import json
 
-from django.http import HttpResponse
-from django.shortcuts import render
 from django.core import serializers
 from django.db.models import Q
+from django.http import HttpResponse
+# from django.utils import simplejson
+
 from . import models
 
 
@@ -131,9 +132,20 @@ def search_by_keywords(request):
 
 
 def get_question_list(request):
-    question_list = models.Answers.objects.all()
+    question_list = models.Questions.objects.all()
     return message_helper(success=True,
                           dataToReturn=json.loads(serializers.serialize("json", question_list)))
+
+
+def get_question_info(request, question_id):
+    if question_id:
+        question = models.Questions.objects.filter(questionId=question_id)
+        if question.count() > 0:
+            return message_helper(success=True, dataToReturn=json.loads(serializers.serialize("json", question)))
+        else:
+            return message_helper(error_message="问题不存在")
+    else:
+        return message_helper(method_error=True)
 
 
 def create_question(request):
@@ -213,8 +225,15 @@ def delete_question(request, question_id):
 def get_answer_list_by_question_id(request, question_id):
     if question_id:
         if models.Questions.objects.filter(questionId=question_id).count() > 0:
-            answer_list = models.Answers.objects.filter(questionId=question_id).all()
-            return message_helper(success=True, dataToReturn=json.loads(serializers.serialize("json", answer_list)))
+            answer_list = models.Answers.objects.select_related().filter(questionId=question_id).all()
+            format_answer_list = []
+            for row in answer_list:
+                format_answer_list.append(
+                    {'answerID': row.answerID, 'createTime': row.createTime.strftime("%Y-%m-%dT%H:%M:%S.%f%z"),
+                     'editTime': row.editTime.strftime("%Y-%m-%dT%H:%M:%S.%f%z"), 'questionId': row.questionId.questionId, 'content': row.content,
+                     'createUser': {'userID': row.createUser.userID, 'name': row.createUser.name}})
+            return message_helper(success=True,
+                                  dataToReturn=json.loads(json.dumps(format_answer_list,ensure_ascii=False)))
         else:
             return message_helper(error_message="问题不存在")
     else:
@@ -326,3 +345,7 @@ def message_helper(success=False, method_error=False, error_message="", dataToRe
         message["message"] = error_message
         return HttpResponse(json.dumps(message, ensure_ascii=False),
                             content_type="application/json,charset=utf-8")
+
+
+def ValuesQuerySetToDict(vqs):
+    return [item for item in vqs]
