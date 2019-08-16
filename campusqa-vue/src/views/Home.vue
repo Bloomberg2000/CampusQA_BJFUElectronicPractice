@@ -19,7 +19,7 @@
                             <img :src="imgpath.public.userPic">
                         </v-list-item-avatar>
                         <v-list-item-content>
-                            <v-list-item-title>{{item.createUser.name}}</v-list-item-title>
+                            <v-list-item-title>{{item.createUserName}}</v-list-item-title>
                             <v-list-item-subtitle>{{item.editTime}}</v-list-item-subtitle>
                         </v-list-item-content>
                         <v-card-actions style="margin-right: 10px">

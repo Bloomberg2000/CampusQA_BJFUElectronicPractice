@@ -143,8 +143,7 @@ def get_question_list(request):
         format_question_list.append(
             {'questionID': row.questionId, 'createTime': row.createTime.strftime("%Y-%m-%d %H:%M:%S"),
              'editTime': row.editTime.strftime("%Y-%m-%d %H:%M:%S"), 'title': row.title,
-             'content': row.content,
-             'createUser': {'userID': row.createUser.userID, 'name': row.createUser.name}})
+             'content': row.content, 'createUserID': row.createUser.userID, 'createUserName': row.createUser.name})
     return message_helper(success=True,
                           dataToReturn=json.loads(json.dumps(format_question_list, ensure_ascii=False)))
 
@@ -159,8 +158,8 @@ def get_question_info(request, question_id):
                 format_question_list.append(
                     {'questionID': row.questionId, 'createTime': row.createTime.strftime("%Y-%m-%d %H:%M:%S"),
                      'editTime': row.editTime.strftime("%Y-%m-%d %H:%M:%S"), 'title': row.title,
-                     'content': row.content,
-                     'createUser': {'userID': row.createUser.userID, 'name': row.createUser.name}})
+                     'content': row.content, 'createUserID': row.createUser.userID,
+                     'createUserName': row.createUser.name})
             return message_helper(success=True,
                                   dataToReturn=json.loads(json.dumps(format_question_list, ensure_ascii=False)))
         else:
@@ -254,8 +253,9 @@ def get_answer_list_by_question_id(request, question_id):
                 format_answer_list.append(
                     {'answerID': row.answerID, 'createTime': row.createTime.strftime("%Y-%m-%d %H:%M:%S"),
                      'editTime': row.editTime.strftime("%Y-%m-%d %H:%M:%S"), 'questionId': row.questionId.questionId,
-                     'content': row.content,
-                     'createUser': {'userID': row.createUser.userID, 'name': row.createUser.name}})
+                     'content': row.content, 'createUserID': row.createUser.userID,
+                     'createUserName': row.createUser.name
+                     })
             return message_helper(success=True,
                                   dataToReturn=json.loads(json.dumps(format_answer_list, ensure_ascii=False)))
         else:
