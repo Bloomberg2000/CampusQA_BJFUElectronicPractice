@@ -1,5 +1,15 @@
 <template>
     <div class="askquestion" style="margin-top: 15px">
+        <v-dialog v-model="error" persistent max-width="290">
+            <v-card>
+                <v-card-title class="headline">出错了</v-card-title>
+                <v-card-text>{{errorMessage}}</v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="amber darken-3" text @click="error = false">好的</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
         <v-card outlined>
             <v-card-title>
                 <span class="headline">我要提问</span>
@@ -35,7 +45,7 @@
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="amber darken-3" text>发布问题</v-btn>
+                <v-btn :disabled="!valid" color="amber darken-3" text @click="askQuestion">发布问题</v-btn>
             </v-card-actions>
         </v-card>
     </div>
@@ -45,11 +55,16 @@
     import 'quill/dist/quill.snow.css';
     import 'quill/dist/quill.bubble.css';
     import {quillEditor} from "vue-quill-editor"; //调用编辑器
+    import {AskQuestion} from "../assets/js/url";
+    import axios from 'axios'
+
     export default {
         components: {
             quillEditor
         },
         data: () => ({
+            error: false,
+            errorMessage: '',
             valid: true,
             QuestionForm: {
                 title: '',
@@ -88,7 +103,28 @@
             // 设置编辑器高度
             this.editor.container.style.height = `350px`
         },
-        methods: {}
+        methods: {
+            askQuestion() {
+                let formData = new FormData();
+                formData.append('title', this.QuestionForm.title);
+                formData.append('content', this.QuestionForm.describe);
+                axios.post(AskQuestion, formData).then(
+                    res => {
+                        if (res.data.status === 200) {
+                            this.$router.push({
+                                path: "/questiondetail",
+                                query: {
+                                    questionID: res.data.data.questionID
+                                }
+                            });
+                        } else {
+                            this.error = true;
+                            this.errorMessage = res.data.message;
+                        }
+                    }
+                )
+            },
+        }
     }
 </script>
 

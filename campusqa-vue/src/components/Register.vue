@@ -1,5 +1,15 @@
 <template>
     <v-layout justify-center>
+        <v-dialog v-model="dialog" persistent max-width="290">
+            <v-card>
+                <v-card-title class="headline">{{dialogTitle}}</v-card-title>
+                <v-card-text>{{dialogMessage}}</v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="amber darken-3" text @click="dialog = false">好的</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
         <v-dialog v-model="show" persistent max-width="600px">
             <template v-slot:activator="{ on }">
                 <v-list-item link v-on="on">
@@ -70,17 +80,23 @@
                 <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn color="amber darken-3" text @click="close">关闭</v-btn>
-                    <v-btn color="amber darken-3" text @click="close">注册</v-btn>
+                    <v-btn color="amber darken-3" text :disabled="!valid" @click="register">注册</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
     </v-layout>
 </template>
 <script>
+    import axios from 'axios'
+    import {Register} from "../assets/js/url";
+
     export default {
         data: () => ({
             valid: true,
             show: false,
+            dialog: false,
+            dialogTitle: '',
+            dialogMessage: '',
             registerForm: {
                 name: '',
                 gender: '',
@@ -120,7 +136,31 @@
                 this.registerForm.enrollmentTime = '';
                 this.$refs.form.reset();
                 this.show = false;
-            }
+            },
+            register() {
+                let formData = new FormData();
+                formData.append('name', this.registerForm.name);
+                formData.append('gender', this.registerForm.gender);
+                formData.append('college', this.registerForm.college);
+                formData.append('phoneNum', this.registerForm.phoneNum);
+                formData.append('password', this.registerForm.password);
+                formData.append('enrollmentTime', this.registerForm.enrollmentTime);
+                axios.post(Register, formData).then(
+                    res => {
+                        if (res.data.status === 200) {
+                            this.dialogTitle = "注册成功";
+                            this.dialogMessage = "现在可以登录啦";
+                            this.dialog = true;
+                            this.close();
+                        } else {
+                            this.dialogTitle = "出错了，请重试";
+                            this.dialogMessage = res.data.message;
+                            this.dialog = true;
+                            // this.close();
+                        }
+                    }
+                )
+            },
         }
     }
 </script>

@@ -24,13 +24,17 @@ def login(request):
                     if current_user.password == password:
                         request.session['ISLOGIN'] = "true"
                         request.session['USERUNIQUEID'] = current_user.userID
-                        return message_helper(success=True)
+                        return message_helper(success=True, dataToReturn=json.loads(
+                            json.dumps({"userID": current_user.userID}, ensure_ascii=False)
+                        ))
                     else:
                         return message_helper(error_message="密码错误")
                 except models.User.DoesNotExist:
                     return message_helper(error_message="用户不存在")
             else:
                 return message_helper(error_message="用户名或密码不能为空")
+        else:
+            return message_helper(error_message="请确认填写了必填字段")
     else:
         return message_helper(method_error=True)
 
@@ -38,8 +42,9 @@ def login(request):
 def logout(request):
     if not is_login(request):
         return message_helper(error_message="请先登录")
-    request.session['ISLOGIN'] = "false"
-    request.session['USERUNIQUEID'] = ''
+    # request.session['ISLOGIN'] = "false"
+    # request.session['USERUNIQUEID'] = ''
+    request.session.flush()
     return message_helper(success=True)
 
 
@@ -122,7 +127,7 @@ def search_by_keywords(request):
     if keyword:
         if is_login(request):
             models.SearchHistory(userID=models.User.objects.get(userID=who_is_login(request)),
-                                 searchTime=datetime.datetime.now(),
+                                 searchTime=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                  searchContent=keyword,
                                  isValid=True).save()
         search_result = models.Questions.objects.filter(Q(title__icontains=keyword) | Q(content__icontains=keyword))
@@ -132,16 +137,32 @@ def search_by_keywords(request):
 
 
 def get_question_list(request):
-    question_list = models.Questions.objects.all()
+    question_list = models.Questions.objects.select_related().all()
+    format_question_list = []
+    for row in question_list:
+        format_question_list.append(
+            {'questionID': row.questionId, 'createTime': row.createTime.strftime("%Y-%m-%d %H:%M:%S"),
+             'editTime': row.editTime.strftime("%Y-%m-%d %H:%M:%S"), 'title': row.title,
+             'content': row.content,
+             'createUser': {'userID': row.createUser.userID, 'name': row.createUser.name}})
     return message_helper(success=True,
-                          dataToReturn=json.loads(serializers.serialize("json", question_list)))
+                          dataToReturn=json.loads(json.dumps(format_question_list, ensure_ascii=False)))
 
 
 def get_question_info(request, question_id):
     if question_id:
         question = models.Questions.objects.filter(questionId=question_id)
         if question.count() > 0:
-            return message_helper(success=True, dataToReturn=json.loads(serializers.serialize("json", question)))
+            question_list = models.Questions.objects.select_related().filter(questionId=question_id).all()
+            format_question_list = []
+            for row in question_list:
+                format_question_list.append(
+                    {'questionID': row.questionId, 'createTime': row.createTime.strftime("%Y-%m-%d %H:%M:%S"),
+                     'editTime': row.editTime.strftime("%Y-%m-%d %H:%M:%S"), 'title': row.title,
+                     'content': row.content,
+                     'createUser': {'userID': row.createUser.userID, 'name': row.createUser.name}})
+            return message_helper(success=True,
+                                  dataToReturn=json.loads(json.dumps(format_question_list, ensure_ascii=False)))
         else:
             return message_helper(error_message="问题不存在")
     else:
@@ -158,15 +179,17 @@ def create_question(request):
             content = request.POST.get('content')
             if title and content:
                 createUser = models.User.objects.get(userID=who_is_login(request))
-                createTime = datetime.datetime.now()
-                editTime = datetime.datetime.now()
+                createTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                editTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 if models.Questions.objects.filter(title=title).count() > 0:
                     return message_helper(error_message="题目已存在")
                 else:
                     new_question = models.Questions(createUser=createUser, createTime=createTime, editTime=editTime,
                                                     title=title, content=content)
                     new_question.save()
-                    return message_helper(success=True)
+                    return message_helper(success=True, dataToReturn=json.loads(
+                        json.dumps({"questionID": new_question.questionId}, ensure_ascii=False)
+                    ))
             else:
                 return message_helper(error_message="请确认所有必填项已填写")
         else:
@@ -184,7 +207,7 @@ def edit_question(request, question_id):
             title = request.POST.get('title')
             content = request.POST.get('content')
             if question_id and title and content:
-                editTime = datetime.datetime.now()
+                editTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 try:
                     question = models.Questions.objects.get(questionId=question_id)
                     if question.createUser.userID == who_is_login(request):
@@ -229,11 +252,12 @@ def get_answer_list_by_question_id(request, question_id):
             format_answer_list = []
             for row in answer_list:
                 format_answer_list.append(
-                    {'answerID': row.answerID, 'createTime': row.createTime.strftime("%Y-%m-%dT%H:%M:%S.%f%z"),
-                     'editTime': row.editTime.strftime("%Y-%m-%dT%H:%M:%S.%f%z"), 'questionId': row.questionId.questionId, 'content': row.content,
+                    {'answerID': row.answerID, 'createTime': row.createTime.strftime("%Y-%m-%d %H:%M:%S"),
+                     'editTime': row.editTime.strftime("%Y-%m-%d %H:%M:%S"), 'questionId': row.questionId.questionId,
+                     'content': row.content,
                      'createUser': {'userID': row.createUser.userID, 'name': row.createUser.name}})
             return message_helper(success=True,
-                                  dataToReturn=json.loads(json.dumps(format_answer_list,ensure_ascii=False)))
+                                  dataToReturn=json.loads(json.dumps(format_answer_list, ensure_ascii=False)))
         else:
             return message_helper(error_message="问题不存在")
     else:
@@ -249,8 +273,8 @@ def create_answer(request, question_id):
             content = request.POST.get('content')
             if question_id and content:
                 createUser = models.User.objects.get(userID=who_is_login(request))
-                createTime = datetime.datetime.now()
-                editTime = datetime.datetime.now()
+                createTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                editTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 try:
                     current_question = models.Questions.objects.get(questionId=question_id)
                     new_answer = models.Answers(createUser=createUser, createTime=createTime,
@@ -275,7 +299,7 @@ def edit_answer(request, answer_id):
         if request.POST:
             content = request.POST.get('content')
             if answer_id and content:
-                editTime = datetime.datetime.now()
+                editTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 try:
                     answer = models.Answers.objects.get(answerID=answer_id)
                     if answer.createUser.userID == who_is_login(request):

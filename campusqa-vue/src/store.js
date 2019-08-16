@@ -7,7 +7,12 @@ Vue.use(Vuex)
 export default new Vuex.Store({
     state: {
         imageStyle: imagePath,
+        currentUserID: ""
     },
-    mutations: {},
+    mutations: {
+        userChange(state, userID) {
+            state.currentUserID = userID;
+        }
+    },
     actions: {}
 })
