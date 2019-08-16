@@ -114,7 +114,7 @@
                         </v-tooltip>
                         <v-tooltip v-if="authorityJudgment(item.createUserID)" bottom>
                             <template v-slot:activator="{ on }">
-                                <v-btn text fab dark small color="grey darken-1" v-on="on">
+                                <v-btn text fab dark small color="grey darken-1" v-on="on" @click="deleteAnswer(item.answerID)">
                                     <v-icon>mdi-delete</v-icon>
                                 </v-btn>
                             </template>
@@ -157,7 +157,7 @@
     import 'quill/dist/quill.bubble.css';
     import {quillEditor} from "vue-quill-editor"; //调用编辑器
     import axios from 'axios'
-    import {AnswerQuestion, AnswersInfo, DeleteQuestion, QuestionsInfo} from "../assets/js/url";
+    import {AnswerQuestion, AnswersInfo, DeleteAnswer, DeleteQuestion, QuestionsInfo} from "../assets/js/url";
 
     export default {
         components: {
@@ -242,6 +242,23 @@
                                 this.dialogTitle = "删除成功";
                                 this.dialogMessage = "下面将为您跳转到首页";
                                 this.dialogBackToHome = true;
+                            }
+                        }
+                    )
+            },
+            deleteAnswer(answerID) {
+                axios.get(DeleteAnswer + answerID)
+                    .then(
+                        res => {
+                            if (res.data.status === 200) {
+                                this.snackBar = true;
+                                this.snackBarMessage = "回答删除成功！";
+                                this.getAnswers();
+                            } else {
+                                this.dialog = true;
+                                this.dialogTitle = "删除失败";
+                                this.dialogMessage = res.data.message;
+                                this.dialogBackToHome = false;
                             }
                         }
                     )
