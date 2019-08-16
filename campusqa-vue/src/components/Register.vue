@@ -1,28 +1,15 @@
 <template>
     <v-layout justify-center>
-        <v-dialog v-model="dialog" persistent max-width="290">
-            <v-card>
-                <v-card-title class="headline">{{dialogTitle}}</v-card-title>
-                <v-card-text>{{dialogMessage}}</v-card-text>
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="amber darken-3" text @click="dialog = false">好的</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-        <v-dialog v-model="show" persistent max-width="600px">
+        <v-dialog v-model="registerModalShow" persistent max-width="600px">
             <template v-slot:activator="{ on }">
                 <v-list-item link v-on="on">
                     <v-list-item-action>
                         <v-icon>mdi-account-check</v-icon>
                     </v-list-item-action>
                     <v-list-item-content>
-                        <v-list-item-title class="grey--text">
-                            注册
-                        </v-list-item-title>
+                        <v-list-item-title class="grey--text">注册</v-list-item-title>
                     </v-list-item-content>
                 </v-list-item>
-                <!--                <v-btn color="primary" dark v-on="on">Open Dialog</v-btn>-->
             </template>
             <v-card>
                 <v-card-title>
@@ -34,43 +21,30 @@
                             <v-layout wrap>
                                 <v-flex xs12 sm6>
                                     <v-text-field v-model="registerForm.name" :rules="rules.name" label="姓名*"
-                                                  :counter="10"
-                                                  color="amber darken-3"
-                                                  required>
-                                    </v-text-field>
+                                                  :counter="10" color="amber darken-3" required/>
                                 </v-flex>
                                 <v-flex xs12 sm6>
-                                    <v-select v-model="registerForm.gender"
-                                              :rule="rules.gender"
-                                              :items="['男', '女']"
-                                              label="性别*"
-                                              color="amber darken-3"
-                                              required
-                                    ></v-select>
+                                    <v-select v-model="registerForm.gender" :rule="rules.gender"
+                                              :items="['男', '女']" label="性别*"
+                                              color="amber darken-3" required/>
                                 </v-flex>
                                 <v-flex xs12 sm6>
                                     <v-text-field v-model="registerForm.enrollmentTime" :rules="rules.enrollmentTime"
-                                                  label="入学年份*"
-                                                  color="amber darken-3"
-                                                  required></v-text-field>
+                                                  label="入学年份*" color="amber darken-3" required/>
                                 </v-flex>
                                 <v-flex xs12 sm6>
-                                    <v-autocomplete v-model="registerForm.college"
-                                                    :rules="rules.college"
-                                                    :items="['信息学院', '理学院', '环境学院']"
-                                                    label="学院"
-                                                    color="amber darken-3"
-                                    ></v-autocomplete>
+                                    <v-autocomplete v-model="registerForm.college" :rules="rules.college"
+                                                    :items="['信息学院', '理学院', '环境科学与技术学院','林学院','园林学院','草原与草业学院']"
+                                                    label="学院" color="amber darken-3"/>
                                 </v-flex>
                                 <v-flex xs12 sm6>
-                                    <v-text-field v-model="registerForm.phoneNum" :rules="rules.phoneNum" label="电话号码*"
-                                                  color="amber darken-3" required></v-text-field>
+                                    <v-text-field v-model="registerForm.phoneNum" :rules="rules.phoneNum"
+                                                  label="电话号码*" color="amber darken-3" required/>
                                 </v-flex>
                                 <v-flex xs12 sm6>
-                                    <v-text-field v-model="registerForm.password" :rules="rules.password" label="密码*"
-                                                  color="amber darken-3"
-                                                  type="password" required
-                                                  hint="密码需8位及以上，包含数字、字母"></v-text-field>
+                                    <v-text-field v-model="registerForm.password" :rules="rules.password"
+                                                  label="密码*" color="amber darken-3" type="password"
+                                                  required hint="密码需8位及以上，包含数字、字母"/>
                                 </v-flex>
                             </v-layout>
                         </v-form>
@@ -78,9 +52,19 @@
                     <small>*为必填项</small>
                 </v-card-text>
                 <v-card-actions>
-                    <v-spacer></v-spacer>
+                    <v-spacer/>
                     <v-btn color="amber darken-3" text @click="close">关闭</v-btn>
                     <v-btn color="amber darken-3" text :disabled="!valid" @click="register">注册</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+        <v-dialog v-model="messageDialogShow" persistent max-width="290">
+            <v-card>
+                <v-card-title class="headline">{{messageDialogTitle}}</v-card-title>
+                <v-card-text>{{messageDialogMessage}}</v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="amber darken-3" text @click="messageDialogShow = false">好的</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -93,10 +77,10 @@
     export default {
         data: () => ({
             valid: true,
-            show: false,
-            dialog: false,
-            dialogTitle: '',
-            dialogMessage: '',
+            registerModalShow: false,
+            messageDialogShow: false,
+            messageDialogTitle: '',
+            messageDialogMessage: '',
             registerForm: {
                 name: '',
                 gender: '',
@@ -135,7 +119,7 @@
                 this.registerForm.password = '';
                 this.registerForm.enrollmentTime = '';
                 this.$refs.form.reset();
-                this.show = false;
+                this.registerModalShow = false;
             },
             register() {
                 let formData = new FormData();
@@ -148,14 +132,14 @@
                 axios.post(Register, formData).then(
                     res => {
                         if (res.data.status === 200) {
-                            this.dialogTitle = "注册成功";
-                            this.dialogMessage = "现在可以登录啦";
-                            this.dialog = true;
+                            this.messageDialogTitle = "注册成功";
+                            this.messageDialogMessage = "现在可以登录啦";
+                            this.messageDialogShow = true;
                             this.close();
                         } else {
-                            this.dialogTitle = "出错了，请重试";
-                            this.dialogMessage = res.data.message;
-                            this.dialog = true;
+                            this.messageDialogTitle = "出错了，请重试";
+                            this.messageDialogMessage = res.data.message;
+                            this.messageDialogShow = true;
                             // this.close();
                         }
                     }

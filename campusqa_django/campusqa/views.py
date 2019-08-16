@@ -61,7 +61,7 @@ def register(request):
             if name and gender and college and phoneNum and password and enrollmentTime:
                 count = models.User.objects.filter(phoneNum=phoneNum).count()
                 if models.User.objects.filter(phoneNum=phoneNum).count() > 0:
-                    return message_helper(error_message="用户已存在")
+                    return message_helper(error_message="该手机号已注册")
                 else:
                     gender = 0 if (gender is '男') else 1
                     password = hashlib.md5(password.encode(encoding='UTF-8')).hexdigest()  # 对密码进行加密

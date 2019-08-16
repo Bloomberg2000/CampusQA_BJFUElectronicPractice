@@ -1,60 +1,50 @@
 <template>
     <v-app id="app">
         <v-app-bar app clipped-left color="amber">
-            <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
+            <v-app-bar-nav-icon @click="navDrawerShow = !navDrawerShow"></v-app-bar-nav-icon>
             <span class="title">校园&nbsp;<span class="font-weight-light">问答</span></span>
-            <v-spacer></v-spacer>
-            <!--            <v-text-field solo-inverted flat hide-details label="Search" color="amber darken-3"-->
-            <!--                          prepend-inner-icon="mdi-comment-search-outline"></v-text-field>-->
-            <v-autocomplete
-                    style="margin-top: 2rem"
-                    :items="searchItems" :loading="isLoading" :search-input.sync="search"
-                    color="amber" dark solo clearable hide-no-data item-text="Content"
-                    item-value="Content" placeholder="搜索" prepend-inner-icon="mdi-comment-search-outline"
-                    return-object
-            ></v-autocomplete>
+            <v-spacer/>
+            <v-autocomplete :items="searchItems" :loading="isSearchBarLoading" :search-input.sync="searchContent"
+                            color="amber" dark solo clearable hide-no-data item-text="Content"
+                            item-value="Content" placeholder="搜索" prepend-inner-icon="mdi-comment-search-outline"
+                            return-object style="margin-top: 2rem"/>
         </v-app-bar>
-        <v-navigation-drawer v-model="drawer" app clipped color="grey lighten-4">
+        <v-navigation-drawer v-model="navDrawerShow" app clipped color="grey lighten-4">
             <v-list nav dense class="grey lighten-4">
-                <div>
-                    <v-list-item two-line>
-                        <v-list-item-avatar>
-                            <img :src="imgpath.public.userPic">
-                        </v-list-item-avatar>
+                <v-list-item two-line>
+                    <v-list-item-avatar>
+                        <img :src="imgpath.public.userPic">
+                    </v-list-item-avatar>
+                    <v-list-item-content>
+                        <v-list-item-title>{{isLogin? userInfo.name: "未登录"}}</v-list-item-title>
+                        <v-list-item-subtitle>{{isLogin? userInfo.college: "请先登录"}}</v-list-item-subtitle>
+                    </v-list-item-content>
+                </v-list-item>
+                <div class="no-login" v-show="!isLogin">
+                    <Login/>
+                    <Register/>
+                </div>
+                <div class="is-login" v-show="isLogin">
+                    <v-list-item color="amber" link>
+                        <v-list-item-action>
+                            <v-icon>mdi-account-circle</v-icon>
+                        </v-list-item-action>
                         <v-list-item-content>
-                            <v-list-item-title v-if="!isLogin">未登录</v-list-item-title>
-                            <v-list-item-title v-else>{{userInfo.name}}</v-list-item-title>
-                            <v-list-item-subtitle v-if="!isLogin">请先登录</v-list-item-subtitle>
-                            <v-list-item-subtitle v-else>{{userInfo.college}}</v-list-item-subtitle>
+                            <v-list-item-title class="grey--text">
+                                个人中心
+                            </v-list-item-title>
                         </v-list-item-content>
                     </v-list-item>
-                    <div class="no-login" v-show="!isLogin">
-                        <Login/>
-                        <Register/>
-                    </div>
-                    <div class="is-login" v-show="isLogin">
-                        <v-list-item color="amber" link>
-                            <v-list-item-action>
-                                <v-icon>mdi-account-circle</v-icon>
-                            </v-list-item-action>
-                            <v-list-item-content>
-                                <v-list-item-title class="grey--text">
-                                    个人中心
-                                </v-list-item-title>
-                            </v-list-item-content>
-                        </v-list-item>
-                        <v-list-item color="amber" link @click="logOut">
-                            <v-list-item-action>
-                                <v-icon>mdi-logout</v-icon>
-                            </v-list-item-action>
-                            <v-list-item-content>
-                                <v-list-item-title class="grey--text">
-                                    注销
-                                </v-list-item-title>
-                            </v-list-item-content>
-                        </v-list-item>
-                    </div>
-
+                    <v-list-item color="amber" link @click="logOut">
+                        <v-list-item-action>
+                            <v-icon>mdi-logout</v-icon>
+                        </v-list-item-action>
+                        <v-list-item-content>
+                            <v-list-item-title class="grey--text">
+                                注销
+                            </v-list-item-title>
+                        </v-list-item-content>
+                    </v-list-item>
                 </div>
                 <template v-for="(item, i) in navItems">
                     <v-layout v-if="item.heading" :key="i" align-center>
@@ -78,7 +68,6 @@
                 </template>
             </v-list>
         </v-navigation-drawer>
-
         <v-content>
             <v-container>
                 <router-view/>
@@ -95,11 +84,30 @@
     const Register = () => import('./components/Register');
 
     export default {
+        props: {
+            source: String,
+        },
         components: {
             Login, Register
         },
-        props: {
-            source: String,
+        data: () => ({
+            navDrawerShow: null,
+            navItems: [
+                {divider: true},
+                {heading: '网站导航'},
+                {icon: 'mdi-home', text: '知识广场', to: '/'},
+                {icon: 'mdi-comment-question', text: '我要提问', to: '/askquestion'},
+            ],
+            contentLimit: 60,
+            entries: [],
+            userInfo: [],
+            isLogin: false,
+            isSearchBarLoading: false,
+            searchContent: null,
+            timer: ''
+        }),
+        destroyed() {
+            clearInterval(this.timer);
         },
         mounted() {
             let _this = this;
@@ -109,7 +117,7 @@
             this.timer = window.setInterval(function () {
                 _this.isLoginWatcher();
             }, 1000);
-            // 获取状态信息
+            // VUEX状态信息获取
             if (sessionStorage.getItem("store")) {
                 this.$store.replaceState(
                     Object.assign({},
@@ -119,49 +127,31 @@
                 );
                 sessionStorage.removeItem("store")
             }
-            //在页面刷新时将vuex里的信息保存到sessionStorage里
+            //在页面刷新时将VUEX的信息保存到sessionStorage里
             window.addEventListener("beforeunload", () => {
                 sessionStorage.setItem("store", JSON.stringify(this.$store.state));
             });
-            // 重新获取用户信息
+            // 每次打开页面重新获取用户信息
             let userID = this.$store.state.currentUserID;
             if (userID !== '') {
                 this.getUserInfo(userID);
             }
         },
-        destroyed() {
-            clearInterval(this.timer);
-        },
-        data: () => ({
-            drawer: null,
-            navItems: [
-                {divider: true},
-                {heading: '网站导航'},
-                {icon: 'mdi-home', text: '知识广场', to: '/'},
-                {icon: 'mdi-comment-question', text: '我要提问', to: '/askquestion'},
-            ],
-            contentLimit: 60,
-            entries: [],
-            timer: '',
-            userInfo: [],
-            isLogin: false,
-            isLoading: false,
-            search: null
-        }),
         methods: {
             isLoginWatcher() {
                 this.isLogin = this.$store.state.currentUserID !== ""
             },
             logOut() {
-                axios.get(Logout).then(
-                    res => {
-                        if (res.data.status === 200) {
-                            this.$store.commit("userChange", '');
-                            this.isLoginWatcher();
-                            this.userInfo = [];
+                axios.get(Logout)
+                    .then(
+                        res => {
+                            if (res.data.status === 200) {
+                                this.$store.commit("userChange", '');
+                                this.userInfo = [];
+                                this.isLoginWatcher();
+                            }
                         }
-                    }
-                )
+                    )
             },
             getUserInfo(userID) {
                 axios.get(UserInfo + userID)
@@ -182,27 +172,27 @@
                 return this.$store.state.currentUserID;
             },
             searchItems() {
+                // 筛选API提供的信息
                 return this.entries.map(entry => {
                     const Content = entry.Content.length > this.contentLimit
                         ? entry.Content.slice(0, this.contentLimit) + '...'
                         : entry.Content;
                     return Object.assign({}, entry, {Content})
                 })
-            },
-            praseHTMLText(html) {
-                return html.replace(/<[^>]*>|/g, "");
             }
         },
         watch: {
             currentUserID(userID) {
+                // 用户ID变化重新获取用户信息
                 if (userID !== "") {
                     this.getUserInfo(userID);
                 }
             },
             search(val) {
+                // 监听search文本
                 if (this.searchItems.length > 0) return;
-                if (this.isLoading) return;
-                this.isLoading = true;
+                if (this.isSearchBarLoading) return;
+                this.isSearchBarLoading = true;
                 axios.get(QuestionsList)
                     .then(res => {
                         if (res.data.status === 200) {
@@ -224,9 +214,9 @@
                     .catch(err => {
                         console.log(err)
                     })
-                    .finally(() => (this.isLoading = false))
+                    .finally(() => (this.isSearchBarLoading = false))
             }
-        },
+        }
     }
 </script>
 
