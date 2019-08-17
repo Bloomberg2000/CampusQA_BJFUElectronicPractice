@@ -30,7 +30,7 @@
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on }">
                                 <div>
-                                    <v-btn class="ma-1" v-model="floatButtonClicked" color="amber" dark fab v-on="on">
+                                    <v-btn class="ma-1" ref="fabButton" v-model="floatButtonClicked" color="amber" dark fab v-on="on">
                                         <v-icon v-if="floatButtonClicked">mdi-close</v-icon>
                                         <v-icon v-else>mdi-toolbox</v-icon>
                                     </v-btn>
@@ -42,7 +42,7 @@
                     </template>
                     <v-tooltip bottom>
                         <template v-slot:activator="{ on }">
-                            <v-btn fab dark small color="indigo" v-on="on" @click="createAnswerExpand = true">
+                            <v-btn fab dark small color="indigo" v-on="on" @click="beforeAnswerQuestion">
                                 <v-icon>mdi-plus</v-icon>
                             </v-btn>
                         </template>
@@ -50,7 +50,7 @@
                     </v-tooltip>
                     <v-tooltip v-if="authorityJudgment(questionInfo.createUserID)" bottom>
                         <template v-slot:activator="{ on }">
-                            <v-btn fab dark small color="green" v-on="on" @click="questionEdit = true">
+                            <v-btn fab dark small color="green" v-on="on" @click="beforeEditQuestion">
                                 <v-icon>mdi-pencil</v-icon>
                             </v-btn>
                         </template>
@@ -58,7 +58,7 @@
                     </v-tooltip>
                     <v-tooltip v-if="authorityJudgment(questionInfo.createUserID)" bottom>
                         <template v-slot:activator="{ on }">
-                            <v-btn fab dark small color="red" v-on="on" @click="deleteQuestion">
+                            <v-btn fab dark small color="red" v-on="on" @click="beforeDeleteQuestion">
                                 <v-icon>mdi-delete</v-icon>
                             </v-btn>
                         </template>
@@ -69,7 +69,7 @@
         </v-expand-transition>
         <!--        问题编辑-->
         <v-expand-transition>
-            <v-card v-if="questionEdit">
+            <v-card v-show="questionEdit">
                 <v-container fluid>
                     <v-list-item>
                         <v-list-item-content>
@@ -348,7 +348,20 @@
                     }
                 )
             },
-            deleteQuestion() {
+            beforeEditQuestion() {
+                // this.floatButtonClicked = false;
+                this.$refs.fabButton.click();
+                this.questionEdit = true
+
+            },
+            beforeAnswerQuestion() {
+                // this.floatButtonClicked = false;
+                this.$refs.fabButton.click();
+                this.createAnswerExpand = true
+            },
+            beforeDeleteQuestion() {
+                // this.floatButtonClicked = false;
+                this.$refs.fabButton.click();
                 this.askDialogShow = true;
                 this.askDialogTitle = "删除问题";
                 this.askDialogMessage = "您确定要删除这个问题吗";

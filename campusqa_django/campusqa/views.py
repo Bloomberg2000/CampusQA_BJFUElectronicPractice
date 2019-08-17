@@ -5,7 +5,6 @@ import json
 from django.core import serializers
 from django.db.models import Q
 from django.http import HttpResponse
-# from django.utils import simplejson
 
 from . import models
 

@@ -24,7 +24,14 @@
                         </v-list-item-content>
                         <v-spacer/>
                         <v-card-actions style="margin-right: 10px">
-                            <v-btn outlined @click="questionDetail(item.questionID)">查看问题</v-btn>
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on }">
+                                    <v-btn text fab small color="grey darken-1" v-on="on" @click="questionDetail(item.questionID)">
+                                        <v-icon>mdi-more</v-icon>
+                                    </v-btn>
+                                </template>
+                                <span>查看问题</span>
+                            </v-tooltip>
                         </v-card-actions>
                     </v-list-item>
                 </v-card>
@@ -74,3 +81,8 @@
         }
     }
 </script>
+<style>
+    .v-list-item__title, .v-list-item__subtitle {
+    white-space: normal;
+    }
+</style>

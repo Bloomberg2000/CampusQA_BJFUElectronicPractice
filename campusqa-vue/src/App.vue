@@ -2,12 +2,13 @@
     <v-app id="app">
         <v-app-bar app clipped-left color="amber">
             <v-app-bar-nav-icon @click="navDrawerShow = !navDrawerShow"></v-app-bar-nav-icon>
-            <span class="title">校园&nbsp;<span class="font-weight-light">问答</span></span>
+            <img style="height: 35px;" :src="imgpath.public.logo">
+<!--            <span class="title">校园&nbsp;<span class="font-weight-light">问答</span></span>-->
             <v-spacer/>
             <v-autocomplete :items="searchItems" :loading="isSearchBarLoading" :search-input.sync="searchContent"
                             color="amber" dark solo clearable hide-no-data item-text="Content"
                             item-value="Content" placeholder="搜索" prepend-inner-icon="mdi-comment-search-outline"
-                            return-object style="margin-top: 2rem"/>
+                            return-object class="pl-4 mt-8"/>
         </v-app-bar>
         <v-navigation-drawer v-model="navDrawerShow" app clipped color="grey lighten-4">
             <v-list nav dense class="grey lighten-4">
@@ -116,21 +117,21 @@
             clearInterval(this.timer);
             this.timer = window.setInterval(function () {
                 _this.isLoginWatcher();
-            }, 1000);
-            // VUEX状态信息获取
-            if (sessionStorage.getItem("store")) {
-                this.$store.replaceState(
-                    Object.assign({},
-                        this.$store.state,
-                        JSON.parse(sessionStorage.getItem("store"))
-                    )
-                );
-                sessionStorage.removeItem("store")
-            }
-            //在页面刷新时将VUEX的信息保存到sessionStorage里
-            window.addEventListener("beforeunload", () => {
-                sessionStorage.setItem("store", JSON.stringify(this.$store.state));
-            });
+            }, 100);
+            // // VUEX状态信息获取
+            // if (localStorage.getItem("store")) {
+            //     this.$store.replaceState(
+            //         Object.assign({},
+            //             this.$store.state,
+            //             JSON.parse(localStorage.getItem("store"))
+            //         )
+            //     );
+            //     localStorage.removeItem("store")
+            // }
+            // //在页面刷新时将VUEX的信息保存到sessionStorage里
+            // window.addEventListener("beforeunload", () => {
+            //     localStorage.setItem("store", JSON.stringify(this.$store.state));
+            // });
             // 每次打开页面重新获取用户信息
             let userID = this.$store.state.currentUserID;
             if (userID !== '') {
