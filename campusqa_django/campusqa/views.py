@@ -366,8 +366,3 @@ def message_helper(success=False, method_error=False, error_message="", dataToRe
         message["message"] = error_message
         return HttpResponse(json.dumps(message, ensure_ascii=False),
                             content_type="application/json,charset=utf-8")
-
-
-def (vqs):
-    return [item for item in vqs]
-ValuesQuerySetToDict
