@@ -41,8 +41,6 @@ def login(request):
 def logout(request):
     if not is_login(request):
         return message_helper(error_message="请先登录")
-    # request.session['ISLOGIN'] = "false"
-    # request.session['USERUNIQUEID'] = ''
     request.session.flush()
     return message_helper(success=True)
 
@@ -370,5 +368,6 @@ def message_helper(success=False, method_error=False, error_message="", dataToRe
                             content_type="application/json,charset=utf-8")
 
 
-def ValuesQuerySetToDict(vqs):
+def (vqs):
     return [item for item in vqs]
+ValuesQuerySetToDict
