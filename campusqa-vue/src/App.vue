@@ -3,12 +3,12 @@
         <v-app-bar app clipped-left color="amber">
             <v-app-bar-nav-icon @click="navDrawerShow = !navDrawerShow"></v-app-bar-nav-icon>
             <img style="height: 35px;" :src="imgpath.public.logo">
-<!--            <span class="title">校园&nbsp;<span class="font-weight-light">问答</span></span>-->
+            <!--            <span class="title">校园&nbsp;<span class="font-weight-light">问答</span></span>-->
             <v-spacer/>
-            <v-autocomplete :items="searchItems" :loading="isSearchBarLoading" :search-input.sync="searchContent"
-                            color="amber" dark solo clearable hide-no-data item-text="Content"
-                            item-value="Content" placeholder="搜索" prepend-inner-icon="mdi-comment-search-outline"
-                            return-object class="pl-4 mt-8"/>
+            <!--            <v-autocomplete :items="searchItems" :loading="isSearchBarLoading" :search-input.sync="searchContent"-->
+            <!--                            color="amber" dark solo clearable hide-no-data item-text="Content"-->
+            <!--                            item-value="Content" placeholder="搜索" prepend-inner-icon="mdi-comment-search-outline"-->
+            <!--                            return-object class="pl-4 mt-8"/>-->
         </v-app-bar>
         <v-navigation-drawer v-model="navDrawerShow" app clipped color="grey lighten-4">
             <v-list nav dense class="grey lighten-4">
@@ -26,7 +26,7 @@
                     <Register/>
                 </div>
                 <div class="is-login" v-show="isLogin">
-                    <v-list-item color="amber" link>
+                    <v-list-item color="amber" link @click="toPersonalCenter">
                         <v-list-item-action>
                             <v-icon>mdi-account-circle</v-icon>
                         </v-list-item-action>
@@ -36,7 +36,7 @@
                             </v-list-item-title>
                         </v-list-item-content>
                     </v-list-item>
-                    <v-list-item color="amber" link @click="logOut">
+                    <v-list-item color="amber" link @click="beforeLogOut">
                         <v-list-item-action>
                             <v-icon>mdi-logout</v-icon>
                         </v-list-item-action>
@@ -74,12 +74,27 @@
                 <router-view/>
             </v-container>
         </v-content>
+        <v-dialog v-model="askDialogShow" persistent max-width="290">
+            <v-card>
+                <v-card-title class="headline">{{askDialogTitle}}</v-card-title>
+                <v-card-text>{{askDialogMessage}}</v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="gray darken-3" text @click="askDialogShow = false">
+                        取消
+                    </v-btn>
+                    <v-btn color="amber darken-3" text @click="askDialogAction">
+                        确认
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-app>
 </template>
 
 <script>
     import axios from 'axios'
-    import {Logout, QuestionsList, UserInfo} from "./assets/js/url";
+    import {Logout, UserInfo} from "./assets/js/url";
 
     const Login = () => import('./components/Login');
     const Register = () => import('./components/Register');
@@ -100,12 +115,16 @@
                 {icon: 'mdi-comment-question', text: '我要提问', to: '/askquestion'},
             ],
             contentLimit: 60,
-            entries: [],
+            // entries: [],
             userInfo: [],
             isLogin: false,
-            isSearchBarLoading: false,
-            searchContent: null,
-            timer: ''
+            // isSearchBarLoading: false,
+            // searchContent: null,
+            timer: '',
+            askDialogShow: false,
+            askDialogTitle: '',
+            askDialogMessage: '',
+            askDialogToDo: ''
         }),
         destroyed() {
             clearInterval(this.timer);
@@ -118,20 +137,6 @@
             this.timer = window.setInterval(function () {
                 _this.isLoginWatcher();
             }, 100);
-            // // VUEX状态信息获取
-            // if (localStorage.getItem("store")) {
-            //     this.$store.replaceState(
-            //         Object.assign({},
-            //             this.$store.state,
-            //             JSON.parse(localStorage.getItem("store"))
-            //         )
-            //     );
-            //     localStorage.removeItem("store")
-            // }
-            // //在页面刷新时将VUEX的信息保存到sessionStorage里
-            // window.addEventListener("beforeunload", () => {
-            //     localStorage.setItem("store", JSON.stringify(this.$store.state));
-            // });
             // 每次打开页面重新获取用户信息
             let userID = this.$store.state.currentUserID;
             if (userID !== '') {
@@ -139,20 +144,40 @@
             }
         },
         methods: {
+            toPersonalCenter() {
+                this.$router.push({
+                        path: "/personalcenter",
+                        query: {
+                            userID: this.currentUserID
+                        }
+                    }
+                )
+            },
+            beforeLogOut() {
+                this.askDialogShow = true;
+                this.askDialogTitle = "注销";
+                this.askDialogMessage = "您确定要注销吗";
+                this.askDialogToDo = "logOut";
+            },
             isLoginWatcher() {
                 this.isLogin = this.$store.state.currentUserID !== ""
             },
-            logOut() {
-                axios.get(Logout)
-                    .then(
-                        res => {
-                            if (res.data.status === 200) {
-                                this.$store.commit("userChange", '');
-                                this.userInfo = [];
-                                this.isLoginWatcher();
+            askDialogAction() {
+                if (this.askDialogToDo === "logOut") {
+                    this.askDialogShow = false;
+                    axios.get(Logout)
+                        .then(
+                            res => {
+                                if (res.data.status === 200) {
+                                    this.$store.commit("userChange", '');
+                                    this.userInfo = [];
+                                    this.isLoginWatcher();
+                                }
                             }
-                        }
-                    )
+                        )
+                } else {
+                    this.askDialogShow = false;
+                }
             },
             getUserInfo(userID) {
                 axios.get(UserInfo + userID)
@@ -172,15 +197,15 @@
             currentUserID() {
                 return this.$store.state.currentUserID;
             },
-            searchItems() {
-                // 筛选API提供的信息
-                return this.entries.map(entry => {
-                    const Content = entry.Content.length > this.contentLimit
-                        ? entry.Content.slice(0, this.contentLimit) + '...'
-                        : entry.Content;
-                    return Object.assign({}, entry, {Content})
-                })
-            }
+            // searchItems() {
+            //     // 筛选API提供的信息
+            //     return this.entries.map(entry => {
+            //         const Content = entry.Content.length > this.contentLimit
+            //             ? entry.Content.slice(0, this.contentLimit) + '...'
+            //             : entry.Content;
+            //         return Object.assign({}, entry, {Content})
+            //     })
+            // }
         },
         watch: {
             currentUserID(userID) {
@@ -189,34 +214,34 @@
                     this.getUserInfo(userID);
                 }
             },
-            search(val) {
-                // 监听search文本
-                if (this.searchItems.length > 0) return;
-                if (this.isSearchBarLoading) return;
-                this.isSearchBarLoading = true;
-                axios.get(QuestionsList)
-                    .then(res => {
-                        if (res.data.status === 200) {
-                            let data = res.data.data;
-                            console.log(data);
-                            let count = data.length;
-                            let entries = [];
-                            for (let i in data) {
-                                let content = data[i].title + ' ' + data[i].content.replace(/<[^>]*>|/g, "");
-                                entries.push({
-                                    QuestionID: data[i].pk,
-                                    Content: content
-                                })
-                            }
-                            this.count = count;
-                            this.entries = entries
-                        }
-                    })
-                    .catch(err => {
-                        console.log(err)
-                    })
-                    .finally(() => (this.isSearchBarLoading = false))
-            }
+            // search(val) {
+            //     // 监听search文本
+            //     if (this.searchItems.length > 0) return;
+            //     if (this.isSearchBarLoading) return;
+            //     this.isSearchBarLoading = true;
+            //     axios.get(QuestionsList)
+            //         .then(res => {
+            //             if (res.data.status === 200) {
+            //                 let data = res.data.data;
+            //                 console.log(data);
+            //                 let count = data.length;
+            //                 let entries = [];
+            //                 for (let i in data) {
+            //                     let content = data[i].title + ' ' + data[i].content.replace(/<[^>]*>|/g, "");
+            //                     entries.push({
+            //                         QuestionID: data[i].pk,
+            //                         Content: content
+            //                     })
+            //                 }
+            //                 this.count = count;
+            //                 this.entries = entries
+            //             }
+            //         })
+            //         .catch(err => {
+            //             console.log(err)
+            //         })
+            //         .finally(() => (this.isSearchBarLoading = false))
+            // }
         }
     }
 </script>

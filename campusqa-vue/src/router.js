@@ -9,22 +9,25 @@ export default new Router({
             path: '/',
             name: 'home',
             component: () => import(/* webpackChunkName: "about" */ './views/Home.vue'),
-            meta: {title:'知识广场-校园问答'},
+            meta: {title: '知识广场-得知'},
         },
         {
             path: '/askquestion',
             name: 'askquestion',
             component: () => import(/* webpackChunkName: "about" */ './views/AskQuestion.vue'),
-            meta: {title:'我要提问-校园问答'},
+            meta: {title: '我要提问-得知'},
         },
         {
             path: '/questiondetail',
             name: 'questiondetail',
-            // route level code-splitting
-            // this generates a separate chunk (about.[hash].js) for this route
-            // which is lazy-loaded when the route is visited.
             component: () => import(/* webpackChunkName: "about" */ './views/QuestionDetail.vue'),
-            meta: {title:'问题详情-校园问答'},
+            meta: {title: '问题详情-得知'},
+        },
+        {
+            path: '/personalcenter',
+            name: 'personalcenter',
+            component: () => import(/* webpackChunkName: "about" */ './views/PersonalCenter.vue'),
+            meta: {title: '问题详情-得知'},
         }
     ]
 })

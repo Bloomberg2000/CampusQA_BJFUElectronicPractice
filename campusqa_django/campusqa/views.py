@@ -124,7 +124,7 @@ def search_by_keywords(request):
     if keyword:
         if is_login(request):
             models.SearchHistory(userID=models.User.objects.get(userID=who_is_login(request)),
-                                 searchTime=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                 searchTime=current_time(),
                                  searchContent=keyword,
                                  isValid=True).save()
         search_result = models.Questions.objects.filter(Q(title__icontains=keyword) | Q(content__icontains=keyword))
@@ -175,8 +175,8 @@ def create_question(request):
             content = request.POST.get('content')
             if title and content:
                 createUser = models.User.objects.get(userID=who_is_login(request))
-                createTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                editTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                createTime = current_time()
+                editTime = current_time()
                 if models.Questions.objects.filter(title=title).count() > 0:
                     return message_helper(error_message="题目已存在")
                 else:
@@ -203,7 +203,7 @@ def edit_question(request, question_id):
             title = request.POST.get('title')
             content = request.POST.get('content')
             if question_id and title and content:
-                editTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                editTime = current_time()
                 try:
                     question = models.Questions.objects.get(questionId=question_id)
                     if question.createUser.userID == who_is_login(request):
@@ -270,8 +270,8 @@ def create_answer(request, question_id):
             content = request.POST.get('content')
             if question_id and content:
                 createUser = models.User.objects.get(userID=who_is_login(request))
-                createTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                editTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                createTime = current_time()
+                editTime = current_time()
                 try:
                     current_question = models.Questions.objects.get(questionId=question_id)
                     new_answer = models.Answers(createUser=createUser, createTime=createTime,
@@ -296,7 +296,7 @@ def edit_answer(request, answer_id):
         if request.POST:
             content = request.POST.get('content')
             if answer_id and content:
-                editTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                editTime = current_time()
                 try:
                     answer = models.Answers.objects.get(answerID=answer_id)
                     if answer.createUser.userID == who_is_login(request):
@@ -339,6 +339,14 @@ def is_login(request):
 
 def who_is_login(request):
     return request.session.get('USERUNIQUEID')
+
+
+def format_time(time):
+    return (time + datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def current_time():
+    return format_time(datetime.datetime.now())
 
 
 def message_helper(success=False, method_error=False, error_message="", dataToReturn=None):

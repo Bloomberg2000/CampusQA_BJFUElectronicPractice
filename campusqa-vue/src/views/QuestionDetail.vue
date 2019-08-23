@@ -10,7 +10,11 @@
                             <v-list-item-title class="headline mb-1">
                                 {{questionInfo.title}}
                             </v-list-item-title>
-                            <v-list-item-content v-html="questionInfo.content">
+                            <v-list-item-content>
+                                <div class="ql-container ql-snow show">
+                                    <div class="ql-editor top" v-html="questionInfo.content">
+                                    </div>
+                                </div>
                             </v-list-item-content>
                         </v-list-item-content>
                     </v-list-item>
@@ -20,7 +24,7 @@
                         </v-list-item-avatar>
                         <v-list-item-content>
                             <v-list-item-title>{{questionInfo.createUserName}}</v-list-item-title>
-                            <v-list-item-subtitle>{{questionInfo.createTime}}</v-list-item-subtitle>
+                            <v-list-item-subtitle>{{questionInfo.editTime}}</v-list-item-subtitle>
                         </v-list-item-content>
                     </v-list-item>
                 </v-container>
@@ -30,7 +34,8 @@
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on }">
                                 <div>
-                                    <v-btn class="ma-1" ref="fabButton" v-model="floatButtonClicked" color="amber" dark fab v-on="on">
+                                    <v-btn class="ma-1" ref="fabButton" v-model="floatButtonClicked" color="amber" dark
+                                           fab v-on="on">
                                         <v-icon v-if="floatButtonClicked">mdi-close</v-icon>
                                         <v-icon v-else>mdi-toolbox</v-icon>
                                     </v-btn>
@@ -78,7 +83,8 @@
                                 <v-text-field v-model="QuestionEditForm.title" :rules="rules.title" label="问题标题*"
                                               color="amber darken-3" placeholder="请输入问题标题" required :counter="30"
                                               outlined/>
-                                <quill-editor :options="editorOption" v-model="QuestionEditForm.content"/>
+                                <quill-editor class="editor" :options="editorOption"
+                                              v-model="QuestionEditForm.content"/>
                             </v-form>
                         </v-list-item-content>
                     </v-list-item>
@@ -106,7 +112,7 @@
                                     <small style="position:absolute;margin-left:13px;margin-top: -10px;background-color: #ffffff">
                                         回答内容*
                                     </small>
-                                    <quill-editor :options="editorOption" v-model="AnswerForm.content"/>
+                                    <quill-editor class="editor" :options="editorOption" v-model="AnswerForm.content"/>
                                 </v-flex>
                             </v-layout>
                         </v-form>
@@ -135,8 +141,13 @@
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
                     <v-scroll-y-reverse-transition>
-                        <div v-if="!item.isEditing" v-html="item.content"></div>
-                        <quill-editor v-else :options="editorOption" v-model="AnswerEditForm.content"/>
+                        <div v-if="!item.isEditing">
+                            <div class="ql-container ql-snow show">
+                                <div class="ql-editor" v-html="item.content">
+                                </div>
+                            </div>
+                        </div>
+                        <quill-editor v-else class="editor" :options="editorOption" v-model="AnswerEditForm.content"/>
                     </v-scroll-y-reverse-transition>
                     <v-card-actions style="margin-top: 1rem; margin-bottom: -0.5rem">
                         <v-tooltip v-if="authorityJudgment(item.createUserID)" bottom>
@@ -158,7 +169,8 @@
                             <span>删除回答</span>
                         </v-tooltip>
                         <v-spacer></v-spacer>
-                        <v-btn v-show="item.isEditing" color="grey lighten-1" text @click="afterEditAnswer(index)">取消</v-btn>
+                        <v-btn v-show="item.isEditing" color="grey lighten-1" text @click="afterEditAnswer(index)">取消
+                        </v-btn>
                         <v-btn v-show="item.isEditing" color="amber darken-3" text @click="editAnswer(index)">
                             确认修改
                         </v-btn>
@@ -493,5 +505,24 @@
         color: rgba(0, 0, 0, 0.5);
         font-size: 15px;
     }
+
+    .ql-editor.top {
+        padding: 0.5rem 0 0.5rem 0;
+    }
+
+    .ql-container.show {
+        border: none;
+    }
+
+    .ql-editor {
+        padding: 0.5rem 1.2rem 0.5rem 1.2rem;
+        font-size: 15px;
+        line-height: 1.5;
+    }
+
+    .editor * {
+        -webkit-user-select: text;
+    }
+
 
 </style>
