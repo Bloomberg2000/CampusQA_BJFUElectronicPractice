@@ -93,7 +93,6 @@ module.exports = {
     ,
 // webpack-dev-server 相关配置 https://webpack.js.org/configuration/dev-server/
     devServer: {
-        // host: 'localhost',
         host: "0.0.0.0",
         port:
             8080, // 端口号
