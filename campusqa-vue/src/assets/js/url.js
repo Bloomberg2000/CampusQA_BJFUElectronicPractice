@@ -2,8 +2,11 @@ const Register = "campusqa/users/register";
 const Login = "campusqa/users/login";
 const Logout = "campusqa/users/logout";
 const UserInfo = "campusqa/users/personalInfo/";
+const EditUserInfo = "campusqa/users/personalInfo/edit";
 const UserQuestionList = "campusqa/users/personalQuestionList/";
 const UserAnswerList = "campusqa/users/personalAnswerList/";
+
+const SearchLink = "campusqa/search";
 
 const QuestionsList = "campusqa/questions";
 const QuestionsInfo = "campusqa/questions/";
@@ -21,8 +24,10 @@ export {
     Login,
     Logout,
     UserInfo,
+    EditUserInfo,
     UserQuestionList,
     UserAnswerList,
+    SearchLink,
     QuestionsList,
     QuestionsInfo,
     AskQuestion,

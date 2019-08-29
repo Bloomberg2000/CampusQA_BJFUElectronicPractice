@@ -39,3 +39,9 @@ class SearchHistory(models.Model):
     searchTime = models.DateTimeField()
     searchContent = models.CharField(max_length=2000)
     isValid = models.BooleanField()
+
+
+class QuickAnswer(models.Model):
+    questionId = models.AutoField(primary_key=True)
+    question = models.CharField(max_length=100)
+    answer = models.CharField(max_length=2000)

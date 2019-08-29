@@ -21,6 +21,7 @@ urlpatterns = [
     path('users/login', views.login),
     path('users/logout', views.logout),
     path('users/register', views.register),
+    path('users/personalInfo/edit', views.edit_user),
     path('users/personalInfo/<int:user_id>/', views.get_personal_info),
     path('users/personalQuestionList/<int:user_id>/', views.get_personal_question_list),
     path('users/personalAnswerList/<int:user_id>/', views.get_personal_answer_list),

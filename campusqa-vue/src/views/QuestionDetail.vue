@@ -177,6 +177,20 @@
                     </v-card-actions>
                 </v-expansion-panel-content>
             </v-expansion-panel>
+            <div v-infinite-scroll="loadMore" infinite-scroll-disabled="busy" infinite-scroll-distance="5">
+                <div style="text-align: center" v-if="hasMore">
+                    <v-chip class="ma-2">
+                        <v-icon style="margin-right: 3px" class="mdi-spin">mdi-loading</v-icon>
+                        加载中
+                    </v-chip>
+                </div>
+                <div style="text-align: center" v-else>
+                    <v-chip class="ma-2">
+                        <v-icon style="margin-right: 3px">mdi-emoticon-excited</v-icon>
+                        没有更多答案啦～
+                    </v-chip>
+                </div>
+            </div>
         </v-expansion-panels>
         <v-dialog v-model="askDialogShow" persistent max-width="290">
             <v-card>
@@ -234,6 +248,8 @@
             quillEditor
         },
         data: () => ({
+            busy: false,
+            hasMore: true,
             questionID: 0,
             answerIDToDel: 0,
             questionInfo: [],
@@ -263,6 +279,12 @@
             dialogBackToHome: false,
             snackBarShow: false,
             snackBarMessage: '',
+            pageData: {
+                totalPage: 0,
+                dataCount: 0,
+                currentPage: 1,
+                pageSize: 10
+            },
             rules: {
                 title: [
                     v => !!v || '问题标题不得为空',
@@ -286,7 +308,7 @@
         mounted() {
             this.questionID = this.$route.query.questionID;
             this.getQuestionInfo();
-            this.getAnswers();
+            this.getAnswers(this.pageData.pageSize, this.pageData.currentPage, false);
         },
         methods: {
             getQuestionInfo() {
@@ -301,20 +323,44 @@
                         }
                     )
             },
-            getAnswers() {
-                axios.get(AnswersInfo + this.questionID)
+            getAnswers(pageSize, pageNum, append_flag) {
+                axios.get(AnswersInfo + this.questionID, {
+                    params: {
+                        pageSize: pageSize,
+                        pageNum: pageNum
+                    }
+                })
                     .then(
                         res => {
                             if (res.data.status === 200) {
-                                let data = res.data.data;
+                                this.pageData.totalPage = res.data.data.totalPage;
+                                this.pageData.dataCount = res.data.data.dataCount;
+                                this.pageData.currentPage = res.data.data.currentPage;
+                                let data = res.data.data.data;
                                 for (let elem of data) {
                                     elem['isEditing'] = false;
                                 }
-                                console.log(data)
-                                this.answerList = data;
+                                if (append_flag) {
+                                    this.answerList = this.answerList.concat(data);
+                                } else {
+                                    this.answerList = data;
+                                    this.busy = false
+                                }
+                            }
+                            if (res.data.status === 406) {
+                                this.busy = true;
+                                this.hasMore = false;
                             }
                         }
                     )
+            },
+            loadMore() {
+                this.busy = true;
+                //把busy置位true，这次请求结束前不再执行
+                setTimeout(() => {
+                    this.pageData.currentPage++;
+                    this.getAnswers(this.pageData.pageSize, this.pageData.currentPage, true);
+                }, 1300)
             },
             authorityJudgment(accessUserID) {
                 return accessUserID + '' === this.currentUserID;
@@ -328,8 +374,8 @@
                             this.snackBarShow = true;
                             this.snackBarMessage = "回答发布成功！";
                             this.AnswerForm.content = '';
-                            this.createAnswerExpand = false
-                            this.getAnswers();
+                            this.createAnswerExpand = false;
+                            this.getAnswers(this.pageData.pageSize, 1, false);
                         } else {
                             this.messageDialogShow = true;
                             this.messageDialogTitle = "发布失败";
@@ -397,7 +443,7 @@
                             this.snackBarShow = true;
                             this.snackBarMessage = "答案编辑成功！";
                             this.afterEditAnswer(index);
-                            this.getAnswers();
+                            this.getAnswers(this.pageData.pageSize, 1, false);
                         } else {
                             this.messageDialogShow = true;
                             this.messageDialogTitle = "答案编辑失败";
@@ -436,7 +482,7 @@
                                 if (res.data.status === 200) {
                                     this.snackBarShow = true;
                                     this.snackBarMessage = "回答删除成功！";
-                                    this.getAnswers();
+                                    this.getAnswers(this.pageData.pageSize, 1, false);
                                 } else {
                                     this.messageDialogShow = true;
                                     this.messageDialogTitle = "删除失败";

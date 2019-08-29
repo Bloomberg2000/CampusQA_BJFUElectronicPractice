@@ -5,11 +5,40 @@
             <img style="height: 35px;" :src="imgpath.public.logo">
             <!--            <span class="title">校园&nbsp;<span class="font-weight-light">问答</span></span>-->
             <v-spacer/>
-            <!--            <v-autocomplete :items="searchItems" :loading="isSearchBarLoading" :search-input.sync="searchContent"-->
-            <!--                            color="amber" dark solo clearable hide-no-data item-text="Content"-->
-            <!--                            item-value="Content" placeholder="搜索" prepend-inner-icon="mdi-comment-search-outline"-->
-            <!--                            return-object class="pl-4 mt-8"/>-->
+            <v-btn color="#616161" dark fab small @click.stop="drawer = !drawer">
+                <v-icon>mdi-comment-search-outline</v-icon>
+            </v-btn>
         </v-app-bar>
+        <v-navigation-drawer v-model="drawer" absolute temporary right width="400">
+            <v-list-item>
+                <v-list-item-content>
+                    <v-text-field color="amber" v-model="searchContent" label="搜索" placeholder="请输入搜索内容"></v-text-field>
+                </v-list-item-content>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list dense>
+                <div v-if="askNow">
+                    <small style="padding: 10px">得知快问</small>
+                    <v-list-item v-for="(item,index) in askNowResult" :key="index">
+                        <v-list-item-content>
+                            <span style="font-size: 20px;padding:5px 0px 5px 0px">{{item.fields.answer}}</span>
+                            <v-list-item-subtitle style="padding:5px 0px 5px 0px">{{item.fields.question}}</v-list-item-subtitle>
+                        </v-list-item-content>
+                    </v-list-item>
+                    <v-divider></v-divider>
+                </div>
+                <div>
+                    <small style="padding: 10px">搜索结果</small>
+                    <v-list-item v-for="(item,index) in searchResult" :key="index"
+                                 @click="questionDetail(item.questionID)">
+                        <v-list-item-content>
+                            <v-list-item-title style="font-size: 16px;">{{item.title}}</v-list-item-title>
+                            <v-list-item-subtitle>{{praseHTMLText(item.content)}}</v-list-item-subtitle>
+                        </v-list-item-content>
+                    </v-list-item>
+                </div>
+            </v-list>
+        </v-navigation-drawer>
         <v-navigation-drawer v-model="navDrawerShow" app clipped color="grey lighten-4">
             <v-list nav dense class="grey lighten-4">
                 <v-list-item two-line>
@@ -94,7 +123,7 @@
 
 <script>
     import axios from 'axios'
-    import {Logout, UserInfo} from "./assets/js/url";
+    import {Logout, SearchLink, UserInfo} from "./assets/js/url";
 
     const Login = () => import('./components/Login');
     const Register = () => import('./components/Register');
@@ -107,6 +136,11 @@
             Login, Register
         },
         data: () => ({
+            drawer: false,
+            items: [
+                {title: 'Home', icon: 'dashboard'},
+                {title: 'About', icon: 'question_answer'},
+            ],
             navDrawerShow: null,
             navItems: [
                 {divider: true},
@@ -115,16 +149,17 @@
                 {icon: 'mdi-comment-question', text: '我要提问', to: '/askquestion'},
             ],
             contentLimit: 60,
-            // entries: [],
             userInfo: [],
             isLogin: false,
-            // isSearchBarLoading: false,
-            // searchContent: null,
             timer: '',
             askDialogShow: false,
             askDialogTitle: '',
             askDialogMessage: '',
-            askDialogToDo: ''
+            askDialogToDo: '',
+            searchContent: '',
+            searchResult: [],
+            askNow: false,
+            askNowResult: [],
         }),
         destroyed() {
             clearInterval(this.timer);
@@ -162,6 +197,14 @@
             isLoginWatcher() {
                 this.isLogin = this.$store.state.currentUserID !== ""
             },
+            questionDetail(questionID) {
+                this.$router.push({
+                    path: "/questiondetail",
+                    query: {
+                        questionID: questionID
+                    }
+                });
+            },
             askDialogAction() {
                 if (this.askDialogToDo === "logOut") {
                     this.askDialogShow = false;
@@ -188,7 +231,31 @@
                             }
                         }
                     )
-            }
+            },
+            doSearch(searchContent) {
+                axios.get(SearchLink, {
+                    params: {
+                        keyword: searchContent
+                    }
+                })
+                    .then(
+                        res => {
+                            this.askNow = false;
+                            this.askNowResult = '';
+                            this.searchResult = [];
+                            if (res.data.status === 200) {
+                                if (res.data.data.askNow.length > 0) {
+                                    this.askNow = true;
+                                    this.askNowResult = res.data.data.askNow;
+                                }
+                                this.searchResult = res.data.data.searchResult;
+                            }
+                        }
+                    )
+            },
+            praseHTMLText(html) {
+                return html.replace(/<[^>]*>|/g, "");
+            },
         },
         computed: {
             imgpath() {
@@ -196,16 +263,7 @@
             },
             currentUserID() {
                 return this.$store.state.currentUserID;
-            },
-            // searchItems() {
-            //     // 筛选API提供的信息
-            //     return this.entries.map(entry => {
-            //         const Content = entry.Content.length > this.contentLimit
-            //             ? entry.Content.slice(0, this.contentLimit) + '...'
-            //             : entry.Content;
-            //         return Object.assign({}, entry, {Content})
-            //     })
-            // }
+            }
         },
         watch: {
             currentUserID(userID) {
@@ -214,34 +272,9 @@
                     this.getUserInfo(userID);
                 }
             },
-            // search(val) {
-            //     // 监听search文本
-            //     if (this.searchItems.length > 0) return;
-            //     if (this.isSearchBarLoading) return;
-            //     this.isSearchBarLoading = true;
-            //     axios.get(QuestionsList)
-            //         .then(res => {
-            //             if (res.data.status === 200) {
-            //                 let data = res.data.data;
-            //                 console.log(data);
-            //                 let count = data.length;
-            //                 let entries = [];
-            //                 for (let i in data) {
-            //                     let content = data[i].title + ' ' + data[i].content.replace(/<[^>]*>|/g, "");
-            //                     entries.push({
-            //                         QuestionID: data[i].pk,
-            //                         Content: content
-            //                     })
-            //                 }
-            //                 this.count = count;
-            //                 this.entries = entries
-            //             }
-            //         })
-            //         .catch(err => {
-            //             console.log(err)
-            //         })
-            //         .finally(() => (this.isSearchBarLoading = false))
-            // }
+            searchContent(val) {
+                this.doSearch(val);
+            }
         }
     }
 </script>

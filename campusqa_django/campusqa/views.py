@@ -1,10 +1,9 @@
-import datetime
 import hashlib
 import json
 
 from django.core import serializers
 from django.db.models import Q
-from django.http import HttpResponse
+from campusqa.utils import message_helper, who_is_login, is_login, format_time, current_time, PaginationHelper
 
 from . import models
 
@@ -56,11 +55,10 @@ def register(request):
             password = request.POST.get('password')
             enrollmentTime = request.POST.get('enrollmentTime')
             if name and gender and college and phoneNum and password and enrollmentTime:
-                count = models.User.objects.filter(phoneNum=phoneNum).count()
                 if models.User.objects.filter(phoneNum=phoneNum).count() > 0:
                     return message_helper(error_message="该手机号已注册")
                 else:
-                    gender = 0 if (gender is '男') else 1
+                    gender = 0 if (gender == '男') else 1
                     password = hashlib.md5(password.encode(encoding='UTF-8')).hexdigest()  # 对密码进行加密
                     new_user = models.User(name=name, gender=gender, college=college, phoneNum=phoneNum,
                                            password=password, enrollmentTime=enrollmentTime)
@@ -81,12 +79,14 @@ def get_personal_info(request, user_id):
     if user_id:
         if user_id == who_is_login(request):
             current_user = models.User.objects.filter(userID=user_id).values("name", "gender", "college",
-                                                                             "enrollmentTime")
+                                                                             "enrollmentTime", 'phoneNum')
+            data = json.loads(
+                json.dumps(list(current_user), ensure_ascii=False)
+            )
+            data[0]['gender'] = '男' if (data[0]['gender'] == 0) else '女'
             if current_user.count() > 0:
                 return message_helper(success=True,
-                                      dataToReturn=json.loads(
-                                          json.dumps(list(current_user), ensure_ascii=False)
-                                      ))
+                                      dataToReturn=data)
             else:
                 return message_helper(error_message="用户不存在")
         else:
@@ -95,12 +95,60 @@ def get_personal_info(request, user_id):
         return message_helper(method_error=True)
 
 
+def edit_user(request):
+    if not is_login(request):
+        return message_helper(error_message="请先登录")
+    if request.method == 'POST':  # 当提交表单时
+        # 判断是否传参
+        if request.POST:
+            name = request.POST.get('name')
+            gender = request.POST.get('gender')
+            college = request.POST.get('college')
+            phoneNum = request.POST.get('phoneNum')
+            enrollmentTime = request.POST.get('enrollmentTime')
+            if name and gender and college and phoneNum and enrollmentTime:
+                try:
+                    user = models.User.objects.get(userID=who_is_login(request))
+                    user.name = name
+                    user.gender = 0 if (gender == '男') else 1
+                    user.college = college
+                    user.phoneNum = phoneNum
+                    user.enrollmentTime = enrollmentTime
+                    user.save()
+                    return message_helper(success=True)
+                except models.Questions.DoesNotExist:
+                    return message_helper(error_message="用户不存在")
+            else:
+                return message_helper(error_message="请确认所有必填项已填写")
+        else:
+            return message_helper(error_message="请确认已修改个人信息")
+    else:
+        return message_helper(method_error=True)
+
+
 def get_personal_question_list(request, user_id):
+    page_size = request.GET.get('pageSize')
+    page_num = request.GET.get('pageNum')
+    if page_size and page_num:
+        try:
+            page_num = int(page_num)
+            page_size = int(page_size)
+        except ValueError:
+            return message_helper(error_message="分页参数不正确")
     if user_id:
         if models.User.objects.filter(userID=user_id).count() > 0:
-            question_list = models.Questions.objects.filter(createUser=user_id)
-            return message_helper(success=True,
-                                  dataToReturn=json.loads(serializers.serialize("json", question_list)))
+            pagination_helper = PaginationHelper(models.Questions.objects.filter(createUser=user_id).count(), page_size)
+            if pagination_helper.total_page < page_num:
+                return message_helper(error_message="页面不存在")
+            return_message = {
+                "totalPage": pagination_helper.total_page,
+                "dataCount": pagination_helper.data_count,
+                "currentPage": page_num,
+            }
+            question_list = models.Questions.objects.filter(createUser=user_id)[
+                            pagination_helper.get_offset(page_num):page_size + pagination_helper.get_offset(page_num)]
+            return_message['data'] = json.loads(serializers.serialize("json", question_list))
+            return message_helper(success=True, dataToReturn=return_message)
         else:
             return message_helper(error_message="用户不存在")
     else:
@@ -108,11 +156,37 @@ def get_personal_question_list(request, user_id):
 
 
 def get_personal_answer_list(request, user_id):
+    page_size = request.GET.get('pageSize')
+    page_num = request.GET.get('pageNum')
+    if page_size and page_num:
+        try:
+            page_num = int(page_num)
+            page_size = int(page_size)
+        except ValueError:
+            return message_helper(error_message="分页参数不正确")
     if user_id:
         if models.User.objects.filter(userID=user_id).count() > 0:
-            question_list = models.Answers.objects.filter(createUser=user_id)
+            pagination_helper = PaginationHelper(models.Answers.objects.filter(createUser=user_id).count(), page_size)
+            if pagination_helper.total_page < page_num:
+                return message_helper(error_message="页面不存在")
+            return_message = {
+                "totalPage": pagination_helper.total_page,
+                "dataCount": pagination_helper.data_count,
+                "currentPage": page_num,
+            }
+            answer_list = models.Answers.objects.select_related().filter(createUser=user_id)[
+                          pagination_helper.get_offset(page_num):page_size + pagination_helper.get_offset(page_num)]
+            # return_message['data'] = json.loads(serializers.serialize("json", answer_list))
+            format_answer_list = []
+            for row in answer_list:
+                format_answer_list.append(
+                    {'answerID': row.answerID, 'createTime': row.createTime.strftime("%Y-%m-%d %H:%M:%S"),
+                     'editTime': row.editTime.strftime("%Y-%m-%d %H:%M:%S"), 'questionId': row.questionId.questionId,
+                     'content': row.content, 'createUserID': row.createUser.userID,
+                     'createUserName': row.createUser.name, 'questionName': row.questionId.title
+                     })
             return message_helper(success=True,
-                                  dataToReturn=json.loads(serializers.serialize("json", question_list)))
+                                  dataToReturn=format_answer_list)
         else:
             return message_helper(error_message="用户不存在")
     else:
@@ -127,22 +201,52 @@ def search_by_keywords(request):
                                  searchTime=current_time(),
                                  searchContent=keyword,
                                  isValid=True).save()
-        search_result = models.Questions.objects.filter(Q(title__icontains=keyword) | Q(content__icontains=keyword))
-        return message_helper(success=True, dataToReturn=json.loads(serializers.serialize("json", search_result)))
+        question_list = models.Questions.objects.filter(
+            Q(title__icontains=keyword) | Q(content__icontains=keyword)).order_by('-editTime').select_related().all()
+        quick_answer = models.QuickAnswer.objects.filter(question__icontains=keyword).all()
+        format_question_list = []
+        for row in question_list:
+            format_question_list.append(
+                {'questionID': row.questionId, 'createTime': row.createTime.strftime("%Y-%m-%d %H:%M:%S"),
+                 'editTime': row.editTime.strftime("%Y-%m-%d %H:%M:%S"), 'title': row.title,
+                 'content': row.content, 'createUserID': row.createUser.userID, 'createUserName': row.createUser.name})
+        message = {
+            'askNow': json.loads(serializers.serialize("json", quick_answer)),
+            'searchResult': format_question_list
+        }
+        return message_helper(success=True, dataToReturn=message)
     else:
         return message_helper(error_message="请输入搜索内容")
 
 
 def get_question_list(request):
-    question_list = models.Questions.objects.select_related().all()
+    page_size = request.GET.get('pageSize')
+    page_num = request.GET.get('pageNum')
+    if page_size and page_num:
+        try:
+            page_num = int(page_num)
+            page_size = int(page_size)
+        except ValueError:
+            return message_helper(error_message="分页参数不正确")
+    question_list = models.Questions.objects
+    pagination_helper = PaginationHelper(question_list.count(), page_size)
+    if pagination_helper.total_page < page_num:
+        return message_helper(error_message="页面不存在")
+    return_message = {
+        "totalPage": pagination_helper.total_page,
+        "dataCount": pagination_helper.data_count,
+        "currentPage": page_num,
+    }
+    question_list = question_list.order_by('-editTime').select_related().all()[
+                    pagination_helper.get_offset(page_num):page_size + pagination_helper.get_offset(page_num)]
     format_question_list = []
     for row in question_list:
         format_question_list.append(
             {'questionID': row.questionId, 'createTime': row.createTime.strftime("%Y-%m-%d %H:%M:%S"),
              'editTime': row.editTime.strftime("%Y-%m-%d %H:%M:%S"), 'title': row.title,
              'content': row.content, 'createUserID': row.createUser.userID, 'createUserName': row.createUser.name})
-    return message_helper(success=True,
-                          dataToReturn=json.loads(json.dumps(format_question_list, ensure_ascii=False)))
+    return_message['data'] = format_question_list
+    return message_helper(success=True, dataToReturn=return_message)
 
 
 def get_question_info(request, question_id):
@@ -242,9 +346,27 @@ def delete_question(request, question_id):
 
 
 def get_answer_list_by_question_id(request, question_id):
+    page_size = request.GET.get('pageSize')
+    page_num = request.GET.get('pageNum')
+    if page_size and page_num:
+        try:
+            page_num = int(page_num)
+            page_size = int(page_size)
+        except ValueError:
+            return message_helper(error_message="分页参数不正确")
     if question_id:
         if models.Questions.objects.filter(questionId=question_id).count() > 0:
-            answer_list = models.Answers.objects.select_related().filter(questionId=question_id).all()
+            answer_list = models.Answers.objects.filter(questionId=question_id)
+            pagination_helper = PaginationHelper(answer_list.count(), page_size)
+            if pagination_helper.total_page < page_num:
+                return message_helper(error_message="页面不存在")
+            return_message = {
+                "totalPage": pagination_helper.total_page,
+                "dataCount": pagination_helper.data_count,
+                "currentPage": page_num,
+            }
+            answer_list = answer_list.order_by('-editTime').select_related().all()[
+                          pagination_helper.get_offset(page_num):page_size + pagination_helper.get_offset(page_num)]
             format_answer_list = []
             for row in answer_list:
                 format_answer_list.append(
@@ -253,8 +375,8 @@ def get_answer_list_by_question_id(request, question_id):
                      'content': row.content, 'createUserID': row.createUser.userID,
                      'createUserName': row.createUser.name
                      })
-            return message_helper(success=True,
-                                  dataToReturn=json.loads(json.dumps(format_answer_list, ensure_ascii=False)))
+            return_message['data'] = format_answer_list
+            return message_helper(success=True, dataToReturn=return_message)
         else:
             return message_helper(error_message="问题不存在")
     else:
@@ -331,46 +453,3 @@ def delete_answer(request, answer_id):
             return message_helper(error_message="问题不存在")
     else:
         return message_helper(method_error=True)
-
-
-def is_login(request):
-    return True if (request.session.get('ISLOGIN') == 'true') else False
-
-
-def who_is_login(request):
-    return request.session.get('USERUNIQUEID')
-
-
-def format_time(time):
-    return (time + datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
-
-
-def current_time():
-    return format_time(datetime.datetime.now())
-
-
-def message_helper(success=False, method_error=False, error_message="", dataToReturn=None):
-    MESSAGE = {
-        "success": {"status": 200, "message": "Success!"},
-        "error": {"status": 406},
-        "method_error": {"status": 400, "message": "Bad Request, Please Contact Admin!"}
-    }
-    # 成功
-    if success:
-        message = MESSAGE["success"]
-        if dataToReturn is None:
-            return HttpResponse(json.dumps(message, ensure_ascii=False),
-                                content_type="application/json,charset=utf-8")
-        else:
-            message['data'] = dataToReturn
-            return HttpResponse(json.dumps(message, ensure_ascii=False),
-                                content_type="application/json,charset=utf-8")
-    # 方法错误
-    elif method_error:
-        return HttpResponse(json.dumps(MESSAGE["method_error"], ensure_ascii=False),
-                            content_type="application/json,charset=utf-8")
-    elif not success and not method_error:
-        message = MESSAGE["error"]
-        message["message"] = error_message
-        return HttpResponse(json.dumps(message, ensure_ascii=False),
-                            content_type="application/json,charset=utf-8")
