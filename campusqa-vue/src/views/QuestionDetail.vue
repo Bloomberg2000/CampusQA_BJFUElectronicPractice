@@ -250,7 +250,6 @@
         data: () => ({
             busy: false,
             hasMore: true,
-            questionID: 0,
             answerIDToDel: 0,
             questionInfo: [],
             answerList: [],
@@ -306,7 +305,6 @@
             }
         }),
         mounted() {
-            this.questionID = this.$route.query.questionID;
             this.getQuestionInfo();
             this.getAnswers(this.pageData.pageSize, this.pageData.currentPage, false);
         },
@@ -510,9 +508,16 @@
             },
             currentUserID() {
                 return this.$store.state.currentUserID;
+            },
+            questionID() {
+                return this.$route.query.questionID;
             }
         },
         watch: {
+            questionID(val) {
+                this.getQuestionInfo();
+                this.getAnswers(this.pageData.pageSize, 1, false);
+            },
             top(val) {
                 this.bottom = !val
             },
